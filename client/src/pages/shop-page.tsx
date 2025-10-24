@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
+import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { SlidersHorizontal, Search } from "lucide-react";
+import { SlidersHorizontal, Search, X } from "lucide-react";
 
 export default function ShopPage() {
   const { data: products = [], isLoading } = useQuery<Product[]>({
@@ -44,6 +45,20 @@ export default function ShopPage() {
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
   };
+
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setPriceRange([0, 1000]);
+    setSelectedCategories([]);
+    setSelectedSizes([]);
+    setSelectedDesigners([]);
+  };
+
+  const hasActiveFilters = searchQuery || 
+    (priceRange[0] !== 0 || priceRange[1] !== 1000) ||
+    selectedCategories.length > 0 ||
+    selectedSizes.length > 0 ||
+    selectedDesigners.length > 0;
 
   const FilterPanel = () => (
     <div className="space-y-6">
@@ -174,6 +189,71 @@ export default function ShopPage() {
 
           {/* Products Grid */}
           <div className="lg:col-span-3">
+            {/* Active Filters */}
+            {hasActiveFilters && (
+              <div className="mb-6 flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium">Active Filters:</span>
+                {searchQuery && (
+                  <Badge variant="secondary" className="gap-1">
+                    Search: {searchQuery}
+                    <X
+                      className="h-3 w-3 cursor-pointer hover:text-destructive"
+                      onClick={() => setSearchQuery("")}
+                      data-testid="button-remove-search"
+                    />
+                  </Badge>
+                )}
+                {(priceRange[0] !== 0 || priceRange[1] !== 1000) && (
+                  <Badge variant="secondary" className="gap-1">
+                    ${priceRange[0]} - ${priceRange[1]}
+                    <X
+                      className="h-3 w-3 cursor-pointer hover:text-destructive"
+                      onClick={() => setPriceRange([0, 1000])}
+                      data-testid="button-remove-price"
+                    />
+                  </Badge>
+                )}
+                {selectedCategories.map((cat) => (
+                  <Badge key={cat} variant="secondary" className="gap-1 capitalize">
+                    {cat}
+                    <X
+                      className="h-3 w-3 cursor-pointer hover:text-destructive"
+                      onClick={() => toggleFilter(cat, setSelectedCategories)}
+                      data-testid={`button-remove-category-${cat}`}
+                    />
+                  </Badge>
+                ))}
+                {selectedSizes.map((size) => (
+                  <Badge key={size} variant="secondary" className="gap-1">
+                    Size {size}
+                    <X
+                      className="h-3 w-3 cursor-pointer hover:text-destructive"
+                      onClick={() => toggleFilter(size, setSelectedSizes)}
+                      data-testid={`button-remove-size-${size}`}
+                    />
+                  </Badge>
+                ))}
+                {selectedDesigners.map((designer) => (
+                  <Badge key={designer} variant="secondary" className="gap-1">
+                    {designer}
+                    <X
+                      className="h-3 w-3 cursor-pointer hover:text-destructive"
+                      onClick={() => toggleFilter(designer, setSelectedDesigners)}
+                      data-testid={`button-remove-designer-${designer}`}
+                    />
+                  </Badge>
+                ))}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  data-testid="button-clear-all-filters"
+                >
+                  Clear All
+                </Button>
+              </div>
+            )}
+
             <div className="mb-6 flex items-center justify-between">
               <p className="text-sm text-muted-foreground" data-testid="text-results-count">
                 {filteredProducts.length} {filteredProducts.length === 1 ? "product" : "products"}
@@ -195,13 +275,7 @@ export default function ShopPage() {
                 <p className="text-muted-foreground">No products found matching your filters</p>
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    setSearchQuery("");
-                    setPriceRange([0, 1000]);
-                    setSelectedCategories([]);
-                    setSelectedSizes([]);
-                    setSelectedDesigners([]);
-                  }}
+                  onClick={clearAllFilters}
                   className="mt-4"
                   data-testid="button-clear-filters"
                 >
