@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { getStyleRecommendations } from "./openai";
+import Razorpay from "razorpay";
+import crypto from "crypto";
 import { 
   insertProductSchema, 
   insertWishlistItemSchema,
@@ -10,6 +12,11 @@ import {
   insertAddressSchema,
   addToCartSchema
 } from "@shared/schema";
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID!,
+  key_secret: process.env.RAZORPAY_KEY_SECRET!,
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
@@ -192,15 +199,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Razorpay order creation (placeholder - will be implemented when keys are provided)
+  // Razorpay order creation
   app.post("/api/razorpay/create-order", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
     try {
-      // Placeholder for Razorpay integration
-      res.status(501).json({ 
-        message: "Razorpay integration will be implemented after API keys are configured" 
+      const { items, addressId } = req.body;
+      
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ message: "Invalid cart items" });
+      }
+
+      let calculatedTotal = 0;
+      for (const item of items) {
+        const product = await storage.getProduct(item.productId);
+        if (!product) {
+          return res.status(400).json({ message: `Product ${item.productId} not found` });
+        }
+        const price = typeof product.price === "string" ? parseFloat(product.price) : product.price;
+        calculatedTotal += price * item.quantity;
+      }
+
+      const shipping = calculatedTotal > 100 ? 0 : 10;
+      const tax = calculatedTotal * 0.08;
+      const totalUSD = calculatedTotal + shipping + tax;
+      
+      const USD_TO_INR = 83;
+      const totalINR = Math.round(totalUSD * USD_TO_INR * 100);
+
+      const options = {
+        amount: totalINR,
+        currency: "INR",
+        receipt: `receipt_${Date.now()}_${req.user!.id}`,
+        notes: {
+          userId: req.user!.id,
+          itemCount: items.length,
+        }
+      };
+
+      const razorpayOrder = await razorpay.orders.create(options);
+      
+      res.json({
+        orderId: razorpayOrder.id,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+        calculatedTotalUSD: totalUSD.toFixed(2),
+        calculatedTotalINR: (totalINR / 100).toFixed(2),
       });
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      console.error("Razorpay order creation error:", error);
+      res.status(500).json({ message: error.message || "Failed to create payment order" });
+    }
+  });
+
+  // Razorpay payment verification
+  app.post("/api/razorpay/verify-payment", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+      const sign = razorpay_order_id + "|" + razorpay_payment_id;
+      const expectedSign = crypto
+        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
+        .update(sign.toString())
+        .digest("hex");
+
+      if (razorpay_signature === expectedSign) {
+        res.json({ 
+          success: true, 
+          message: "Payment verified successfully",
+          paymentId: razorpay_payment_id,
+          orderId: razorpay_order_id,
+        });
+      } else {
+        res.status(400).json({ 
+          success: false, 
+          message: "Invalid signature" 
+        });
+      }
+    } catch (error: any) {
+      console.error("Razorpay payment verification error:", error);
+      res.status(500).json({ message: error.message || "Payment verification failed" });
     }
   });
 

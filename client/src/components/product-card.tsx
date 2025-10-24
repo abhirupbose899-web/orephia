@@ -61,7 +61,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Link href={`/product/${product.id}`}>
-      <a className="group block" data-testid={`card-product-${product.id}`}>
+      <div className="group block cursor-pointer" data-testid={`card-product-${product.id}`}>
         <div className="relative overflow-hidden rounded-lg bg-muted aspect-[3/4]">
           <img
             src={mainImage}
@@ -107,7 +107,7 @@ export function ProductCard({ product }: ProductCardProps) {
             ${price.toFixed(2)}
           </p>
         </div>
-      </a>
+      </div>
     </Link>
   );
 }
