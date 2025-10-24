@@ -1,15 +1,62 @@
+import { useState, useEffect } from "react";
 import { useCart } from "@/hooks/use-cart";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Product } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Minus, Plus, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Minus, Plus, X, Tag, Loader2 } from "lucide-react";
 import { Link } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart } = useCart();
+  const { toast } = useToast();
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  
   const { data: products = [] } = useQuery<Product[]>({
     queryKey: ["/api/products"],
+  });
+
+  const validateCouponMutation = useMutation({
+    mutationFn: async (code: string) => {
+      const items = cart.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      }));
+      
+      const res = await apiRequest("POST", "/api/coupons/validate", {
+        code,
+        items,
+      });
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        setAppliedCoupon(data.coupon);
+        setCouponCode("");
+        toast({
+          title: "Coupon Applied!",
+          description: data.message,
+        });
+      } else {
+        toast({
+          title: "Invalid Coupon",
+          description: data.message,
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to apply coupon",
+        variant: "destructive",
+      });
+    },
   });
 
   const cartItemsWithDetails = cart.map((item) => {
@@ -25,8 +72,47 @@ export default function CartPage() {
     return sum + price * item.quantity;
   }, 0);
 
+  const discount = appliedCoupon ? parseFloat(appliedCoupon.discountAmount) : 0;
   const shipping = subtotal > 100 ? 0 : 10;
-  const total = subtotal + shipping;
+  const total = subtotal - discount + shipping;
+
+  const handleApplyCoupon = () => {
+    if (!couponCode.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a coupon code",
+        variant: "destructive",
+      });
+      return;
+    }
+    validateCouponMutation.mutate(couponCode.trim());
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    localStorage.removeItem("appliedCoupon");
+    toast({
+      title: "Coupon Removed",
+      description: "The coupon has been removed from your cart",
+    });
+  };
+
+  useEffect(() => {
+    if (appliedCoupon) {
+      localStorage.setItem("appliedCoupon", JSON.stringify(appliedCoupon));
+    }
+  }, [appliedCoupon]);
+
+  useEffect(() => {
+    const savedCoupon = localStorage.getItem("appliedCoupon");
+    if (savedCoupon) {
+      try {
+        setAppliedCoupon(JSON.parse(savedCoupon));
+      } catch (e) {
+        localStorage.removeItem("appliedCoupon");
+      }
+    }
+  }, []);
 
   if (cart.length === 0) {
     return (
@@ -133,11 +219,57 @@ export default function CartPage() {
           <div className="lg:col-span-1">
             <Card className="p-6 sticky top-24">
               <h2 className="font-semibold text-lg mb-6">Order Summary</h2>
+              
+              {/* Coupon Input */}
+              <div className="mb-6">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter coupon code"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
+                    disabled={!!appliedCoupon || validateCouponMutation.isPending}
+                    data-testid="input-coupon"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={handleApplyCoupon}
+                    disabled={!!appliedCoupon || validateCouponMutation.isPending}
+                    data-testid="button-apply-coupon"
+                  >
+                    {validateCouponMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Apply"
+                    )}
+                  </Button>
+                </div>
+                {appliedCoupon && (
+                  <div className="mt-2">
+                    <Badge variant="secondary" className="gap-1">
+                      <Tag className="h-3 w-3" />
+                      {appliedCoupon.code}
+                      <X
+                        className="h-3 w-3 cursor-pointer hover:text-destructive"
+                        onClick={handleRemoveCoupon}
+                        data-testid="button-remove-coupon"
+                      />
+                    </Badge>
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
                   <span data-testid="text-subtotal">${subtotal.toFixed(2)}</span>
                 </div>
+                {appliedCoupon && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Discount ({appliedCoupon.code})</span>
+                    <span data-testid="text-discount">-${discount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Shipping</span>
                   <span data-testid="text-shipping">

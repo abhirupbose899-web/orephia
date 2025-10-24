@@ -25,6 +25,7 @@ export default function CheckoutPage() {
   const [step, setStep] = useState(1);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -34,6 +35,17 @@ export default function CheckoutPage() {
     return () => {
       document.body.removeChild(script);
     };
+  }, []);
+
+  useEffect(() => {
+    const savedCoupon = localStorage.getItem("appliedCoupon");
+    if (savedCoupon) {
+      try {
+        setAppliedCoupon(JSON.parse(savedCoupon));
+      } catch (e) {
+        localStorage.removeItem("appliedCoupon");
+      }
+    }
   }, []);
 
   const { data: products = [] } = useQuery<Product[]>({
@@ -80,18 +92,21 @@ export default function CheckoutPage() {
         : shippingAddress;
 
       const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const discount = appliedCoupon ? parseFloat(appliedCoupon.discountAmount) : 0;
       const shipping = subtotal > 100 ? 0 : 10;
-      const tax = subtotal * 0.08;
-      const total = subtotal + shipping + tax;
+      const tax = (subtotal - discount) * 0.08;
+      const total = subtotal - discount + shipping + tax;
 
       const orderPayload: any = {
         items,
         shippingAddress: addressToUse,
         subtotal: subtotal.toFixed(2),
+        discount: discount.toFixed(2),
         shipping: shipping.toFixed(2),
         tax: tax.toFixed(2),
         total: total.toFixed(2),
         status: paymentDetails ? "confirmed" : "pending",
+        couponCode: appliedCoupon?.code || null,
       };
 
       if (paymentDetails) {
@@ -104,6 +119,7 @@ export default function CheckoutPage() {
     },
     onSuccess: () => {
       clearCart();
+      localStorage.removeItem("appliedCoupon");
       setOrderPlaced(true);
       setProcessingPayment(false);
       toast({
@@ -149,6 +165,7 @@ export default function CheckoutPage() {
       const res = await apiRequest("POST", "/api/razorpay/create-order", {
         items,
         addressId: selectedAddressId,
+        couponCode: appliedCoupon?.code || null,
       });
 
       const data = await res.json();

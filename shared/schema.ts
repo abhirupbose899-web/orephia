@@ -63,6 +63,21 @@ export const addresses = pgTable("addresses", {
   isDefault: boolean("is_default").default(false),
 });
 
+// Coupons
+export const coupons = pgTable("coupons", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(),
+  discountType: text("discount_type").notNull(),
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }).notNull(),
+  minPurchase: decimal("min_purchase", { precision: 10, scale: 2 }),
+  maxDiscount: decimal("max_discount", { precision: 10, scale: 2 }),
+  usageLimit: integer("usage_limit"),
+  usedCount: integer("used_count").notNull().default(0),
+  expiresAt: timestamp("expires_at"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Orders
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -70,9 +85,11 @@ export const orders = pgTable("orders", {
   items: jsonb("items").notNull().$type<OrderItem[]>(),
   shippingAddress: jsonb("shipping_address").notNull().$type<Address>(),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  discount: decimal("discount", { precision: 10, scale: 2 }).default("0.00"),
   shipping: decimal("shipping", { precision: 10, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  couponCode: text("coupon_code"),
   paymentStatus: text("payment_status").notNull().default("pending"),
   orderStatus: text("order_status").notNull().default("processing"),
   razorpayOrderId: text("razorpay_order_id"),
@@ -134,6 +151,12 @@ export const insertWishlistItemSchema = createInsertSchema(wishlistItems).omit({
   createdAt: true,
 });
 
+export const insertCouponSchema = createInsertSchema(coupons).omit({
+  id: true,
+  createdAt: true,
+  usedCount: true,
+});
+
 // Select types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -145,6 +168,8 @@ export type InsertAddress = z.infer<typeof insertAddressSchema>;
 export type AddressRow = typeof addresses.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type Coupon = typeof coupons.$inferSelect;
+export type InsertCoupon = z.infer<typeof insertCouponSchema>;
 
 // Cart schema for validation
 export const cartItemSchema = z.object({

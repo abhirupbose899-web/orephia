@@ -5,6 +5,9 @@ import { setupAuth } from "./auth";
 import { getStyleRecommendations } from "./openai";
 import Razorpay from "razorpay";
 import crypto from "crypto";
+import { eq } from "drizzle-orm";
+import { db } from "./db";
+import { coupons } from "@shared/schema";
 import { 
   insertProductSchema, 
   insertWishlistItemSchema,
@@ -147,13 +150,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      const { items, shippingAddress, status, paymentId, razorpayOrderId, couponCode } = req.body;
+
+      let calculatedSubtotal = 0;
+      const verifiedItems = [];
+      
+      for (const item of items) {
+        const product = await storage.getProduct(item.productId);
+        if (!product) {
+          return res.status(400).json({ message: `Product ${item.productId} not found` });
+        }
+        const trustedPrice = typeof product.price === "string" ? parseFloat(product.price) : product.price;
+        calculatedSubtotal += trustedPrice * item.quantity;
+        
+        verifiedItems.push({
+          ...item,
+          price: trustedPrice,
+        });
+      }
+
+      let discount = 0;
+      let validCoupon = null;
+
+      if (couponCode) {
+        const coupon = await db.select().from(coupons).where(eq(coupons.code, couponCode.toUpperCase())).limit(1);
+        
+        if (coupon.length > 0) {
+          const couponData = coupon[0];
+          
+          const isValid = couponData.isActive &&
+            (!couponData.expiresAt || new Date(couponData.expiresAt) >= new Date()) &&
+            (!couponData.usageLimit || couponData.usedCount < couponData.usageLimit);
+
+          if (isValid) {
+            const minPurchase = couponData.minPurchase ? parseFloat(couponData.minPurchase as string) : 0;
+            if (calculatedSubtotal >= minPurchase) {
+              const discountValue = parseFloat(couponData.discountValue as string);
+              
+              if (couponData.discountType === "percentage") {
+                discount = (calculatedSubtotal * discountValue) / 100;
+                const maxDiscount = couponData.maxDiscount ? parseFloat(couponData.maxDiscount as string) : null;
+                if (maxDiscount && discount > maxDiscount) {
+                  discount = maxDiscount;
+                }
+              } else if (couponData.discountType === "fixed") {
+                discount = discountValue;
+              }
+              validCoupon = couponData;
+            }
+          }
+        }
+      }
+
+      const shipping = calculatedSubtotal > 100 ? 0 : 10;
+      const tax = (calculatedSubtotal - discount) * 0.08;
+      const total = calculatedSubtotal - discount + shipping + tax;
+
       const orderData = {
-        ...req.body,
         userId: req.user!.id,
+        items: verifiedItems,
+        shippingAddress,
+        subtotal: calculatedSubtotal.toFixed(2),
+        discount: discount.toFixed(2),
+        shipping: shipping.toFixed(2),
+        tax: tax.toFixed(2),
+        total: total.toFixed(2),
+        couponCode: validCoupon ? validCoupon.code : null,
+        paymentStatus: status || "pending",
+        orderStatus: "processing",
+        razorpayOrderId: razorpayOrderId || null,
+        razorpayPaymentId: paymentId || null,
       };
       
       const validatedData = insertOrderSchema.parse(orderData);
       const order = await storage.createOrder(validatedData);
+
+      if (validCoupon) {
+        try {
+          await db.update(coupons)
+            .set({ usedCount: validCoupon.usedCount + 1 })
+            .where(eq(coupons.id, validCoupon.id));
+        } catch (couponError) {
+          console.error("Error updating coupon usage:", couponError);
+        }
+      }
+
       res.status(201).json(order);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
@@ -206,25 +287,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const { items, addressId } = req.body;
+      const { items, addressId, couponCode } = req.body;
       
       if (!items || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({ message: "Invalid cart items" });
       }
 
-      let calculatedTotal = 0;
+      let calculatedSubtotal = 0;
       for (const item of items) {
         const product = await storage.getProduct(item.productId);
         if (!product) {
           return res.status(400).json({ message: `Product ${item.productId} not found` });
         }
         const price = typeof product.price === "string" ? parseFloat(product.price) : product.price;
-        calculatedTotal += price * item.quantity;
+        calculatedSubtotal += price * item.quantity;
       }
 
-      const shipping = calculatedTotal > 100 ? 0 : 10;
-      const tax = calculatedTotal * 0.08;
-      const totalUSD = calculatedTotal + shipping + tax;
+      let discount = 0;
+      let couponData = null;
+
+      if (couponCode) {
+        const coupon = await db.select().from(coupons).where(eq(coupons.code, couponCode.toUpperCase())).limit(1);
+        
+        if (coupon.length > 0) {
+          couponData = coupon[0];
+          
+          const isValid = couponData.isActive &&
+            (!couponData.expiresAt || new Date(couponData.expiresAt) >= new Date()) &&
+            (!couponData.usageLimit || couponData.usedCount < couponData.usageLimit);
+
+          if (isValid) {
+            const minPurchase = couponData.minPurchase ? parseFloat(couponData.minPurchase as string) : 0;
+            if (calculatedSubtotal >= minPurchase) {
+              const discountValue = parseFloat(couponData.discountValue as string);
+              
+              if (couponData.discountType === "percentage") {
+                discount = (calculatedSubtotal * discountValue) / 100;
+                const maxDiscount = couponData.maxDiscount ? parseFloat(couponData.maxDiscount as string) : null;
+                if (maxDiscount && discount > maxDiscount) {
+                  discount = maxDiscount;
+                }
+              } else if (couponData.discountType === "fixed") {
+                discount = discountValue;
+              }
+            }
+          }
+        }
+      }
+
+      const shipping = calculatedSubtotal > 100 ? 0 : 10;
+      const tax = (calculatedSubtotal - discount) * 0.08;
+      const totalUSD = calculatedSubtotal - discount + shipping + tax;
       
       const USD_TO_INR = 83;
       const totalINR = Math.round(totalUSD * USD_TO_INR * 100);
@@ -236,6 +349,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: {
           userId: req.user!.id,
           itemCount: items.length,
+          couponCode: couponCode || "none",
         }
       };
 
@@ -247,6 +361,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         currency: razorpayOrder.currency,
         calculatedTotalUSD: totalUSD.toFixed(2),
         calculatedTotalINR: (totalINR / 100).toFixed(2),
+        discount: discount.toFixed(2),
+        couponApplied: couponCode || null,
       });
     } catch (error: any) {
       console.error("Razorpay order creation error:", error);
@@ -285,6 +401,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Razorpay payment verification error:", error);
       res.status(500).json({ message: error.message || "Payment verification failed" });
+    }
+  });
+
+  // Coupon validation
+  app.post("/api/coupons/validate", async (req, res) => {
+    try {
+      const { code, items } = req.body;
+
+      if (!code || typeof code !== "string") {
+        return res.status(400).json({ 
+          success: false,
+          message: "Invalid coupon code" 
+        });
+      }
+
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Invalid cart items" 
+        });
+      }
+
+      const coupon = await db.select().from(coupons).where(eq(coupons.code, code.toUpperCase())).limit(1);
+
+      if (coupon.length === 0) {
+        return res.status(404).json({ 
+          success: false,
+          message: "Invalid coupon code" 
+        });
+      }
+
+      const couponData = coupon[0];
+
+      if (!couponData.isActive) {
+        return res.status(400).json({ 
+          success: false,
+          message: "This coupon is no longer active" 
+        });
+      }
+
+      if (couponData.expiresAt && new Date(couponData.expiresAt) < new Date()) {
+        return res.status(400).json({ 
+          success: false,
+          message: "This coupon has expired" 
+        });
+      }
+
+      if (couponData.usageLimit && couponData.usedCount >= couponData.usageLimit) {
+        return res.status(400).json({ 
+          success: false,
+          message: "This coupon has reached its usage limit" 
+        });
+      }
+
+      let calculatedSubtotal = 0;
+      for (const item of items) {
+        const product = await storage.getProduct(item.productId);
+        if (!product) {
+          return res.status(400).json({ 
+            success: false,
+            message: `Product ${item.productId} not found` 
+          });
+        }
+        const price = typeof product.price === "string" ? parseFloat(product.price) : product.price;
+        calculatedSubtotal += price * item.quantity;
+      }
+
+      const minPurchase = couponData.minPurchase ? parseFloat(couponData.minPurchase as string) : 0;
+      if (minPurchase > 0 && calculatedSubtotal < minPurchase) {
+        return res.status(400).json({ 
+          success: false,
+          message: `Minimum purchase of $${minPurchase.toFixed(2)} required for this coupon` 
+        });
+      }
+
+      let discountAmount = 0;
+      const discountValue = parseFloat(couponData.discountValue as string);
+
+      if (couponData.discountType === "percentage") {
+        discountAmount = (calculatedSubtotal * discountValue) / 100;
+        const maxDiscount = couponData.maxDiscount ? parseFloat(couponData.maxDiscount as string) : null;
+        if (maxDiscount && discountAmount > maxDiscount) {
+          discountAmount = maxDiscount;
+        }
+      } else if (couponData.discountType === "fixed") {
+        discountAmount = discountValue;
+      }
+
+      res.json({ 
+        success: true,
+        coupon: {
+          code: couponData.code,
+          discountType: couponData.discountType,
+          discountValue: discountValue,
+          discountAmount: discountAmount.toFixed(2),
+        },
+        message: `Coupon applied! You save $${discountAmount.toFixed(2)}` 
+      });
+    } catch (error: any) {
+      console.error("Coupon validation error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to validate coupon" 
+      });
     }
   });
 
