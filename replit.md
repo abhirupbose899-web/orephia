@@ -76,7 +76,7 @@ Preferred communication style: Simple, everyday language.
 
 **Schema Design**
 - Users table: Authentication and profile information
-- Products table: Complete product catalog with JSON fields for arrays (images, sizes, colors, tags)
+- Products table: Complete product catalog with JSON fields for arrays (images, sizes, colors, tags), hierarchical categorization with mainCategory and subCategory fields
 - Wishlist items table: Many-to-many relationship between users and products
 - Orders table: Transaction records with JSON fields for order items and shipping details, includes discount and couponCode fields
 - Addresses table: User shipping/billing addresses
@@ -87,6 +87,9 @@ Preferred communication style: Simple, everyday language.
 - UUID primary keys using PostgreSQL's gen_random_uuid()
 - JSONB columns for flexible array storage (images, sizes, colors, tags) avoiding complex joins
 - Decimal type for monetary values to prevent floating-point precision issues
+- Hierarchical category system with mainCategory (Apparels, Shoes, Bags, Accessories) and subCategory for detailed classification
+  - Apparels subcategories: Dresses, Skirts, Blazers, Jackets, Shirts, T-Shirts, Sweatshirts, Hoodies, Long Sleeves, Tank Tops
+  - Other main categories can have subcategories as needed
 - Timestamps for audit trails on all major entities
 - Shared schema definitions between client and server for type consistency
 
