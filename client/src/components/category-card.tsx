@@ -9,7 +9,7 @@ interface CategoryCardProps {
 export function CategoryCard({ name, image, href }: CategoryCardProps) {
   return (
     <Link href={href}>
-      <a className="group block" data-testid={`card-category-${name.toLowerCase().replace(/\s+/g, '-')}`}>
+      <div className="group block cursor-pointer" data-testid={`card-category-${name.toLowerCase().replace(/\s+/g, '-')}`}>
         <div className="relative overflow-hidden rounded-xl aspect-[4/3] bg-muted">
           <img
             src={image}
@@ -24,7 +24,7 @@ export function CategoryCard({ name, image, href }: CategoryCardProps) {
             </span>
           </div>
         </div>
-      </a>
+      </div>
     </Link>
   );
 }
