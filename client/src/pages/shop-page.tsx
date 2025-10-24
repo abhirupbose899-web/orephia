@@ -1,0 +1,223 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Product } from "@shared/schema";
+import { ProductCard } from "@/components/product-card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SlidersHorizontal, Search } from "lucide-react";
+
+export default function ShopPage() {
+  const { data: products = [], isLoading } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+  });
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [priceRange, setPriceRange] = useState([0, 1000]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [selectedDesigners, setSelectedDesigners] = useState<string[]>([]);
+
+  // Extract unique values for filters
+  const categories = Array.from(new Set(products.map((p) => p.category)));
+  const designers = Array.from(new Set(products.map((p) => p.designer).filter(Boolean))) as string[];
+  const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
+
+  // Filter products
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const price = typeof product.price === "string" ? parseFloat(product.price) : product.price;
+    const matchesPrice = price >= priceRange[0] && price <= priceRange[1];
+    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category);
+    const matchesDesigner = selectedDesigners.length === 0 || (product.designer && selectedDesigners.includes(product.designer));
+    const matchesSize = selectedSizes.length === 0 || (product.sizes && product.sizes.some((s: string) => selectedSizes.includes(s)));
+
+    return matchesSearch && matchesPrice && matchesCategory && matchesDesigner && matchesSize;
+  });
+
+  const toggleFilter = (value: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
+    setter((prev) => 
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+  };
+
+  const FilterPanel = () => (
+    <div className="space-y-6">
+      <div>
+        <h3 className="font-semibold mb-4">Price Range</h3>
+        <Slider
+          value={priceRange}
+          onValueChange={setPriceRange}
+          min={0}
+          max={1000}
+          step={10}
+          className="mb-2"
+          data-testid="slider-price"
+        />
+        <div className="flex justify-between text-sm text-muted-foreground">
+          <span>${priceRange[0]}</span>
+          <span>${priceRange[1]}</span>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="font-semibold mb-4">Category</h3>
+        <div className="space-y-2">
+          {categories.map((category) => (
+            <div key={category} className="flex items-center">
+              <Checkbox
+                id={`cat-${category}`}
+                checked={selectedCategories.includes(category)}
+                onCheckedChange={() => toggleFilter(category, setSelectedCategories)}
+                data-testid={`checkbox-category-${category}`}
+              />
+              <Label htmlFor={`cat-${category}`} className="ml-2 text-sm capitalize cursor-pointer">
+                {category}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h3 className="font-semibold mb-4">Size</h3>
+        <div className="flex flex-wrap gap-2">
+          {sizes.map((size) => (
+            <Button
+              key={size}
+              variant={selectedSizes.includes(size) ? "default" : "outline"}
+              size="sm"
+              onClick={() => toggleFilter(size, setSelectedSizes)}
+              data-testid={`button-size-${size}`}
+            >
+              {size}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {designers.length > 0 && (
+        <div>
+          <h3 className="font-semibold mb-4">Designer</h3>
+          <div className="space-y-2">
+            {designers.map((designer) => (
+              <div key={designer} className="flex items-center">
+                <Checkbox
+                  id={`des-${designer}`}
+                  checked={selectedDesigners.includes(designer)}
+                  onCheckedChange={() => toggleFilter(designer, setSelectedDesigners)}
+                  data-testid={`checkbox-designer-${designer}`}
+                />
+                <Label htmlFor={`des-${designer}`} className="ml-2 text-sm cursor-pointer">
+                  {designer}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
+        {/* Header */}
+        <div className="mb-12">
+          <h1 className="font-serif text-4xl md:text-5xl font-semibold mb-4">Shop All</h1>
+          <p className="text-muted-foreground">Discover our complete collection</p>
+        </div>
+
+        {/* Search and Filter */}
+        <div className="mb-8 flex gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+              data-testid="input-search"
+            />
+          </div>
+          <Sheet>
+            <SheetTrigger asChild className="lg:hidden">
+              <Button variant="outline" data-testid="button-filters-mobile">
+                <SlidersHorizontal className="h-4 w-4 mr-2" />
+                Filters
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Filters</SheetTitle>
+              </SheetHeader>
+              <div className="mt-6">
+                <FilterPanel />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        <div className="grid lg:grid-cols-4 gap-8">
+          {/* Desktop Filters */}
+          <aside className="hidden lg:block">
+            <div className="sticky top-24">
+              <h2 className="font-semibold text-lg mb-6">Filters</h2>
+              <FilterPanel />
+            </div>
+          </aside>
+
+          {/* Products Grid */}
+          <div className="lg:col-span-3">
+            <div className="mb-6 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground" data-testid="text-results-count">
+                {filteredProducts.length} {filteredProducts.length === 1 ? "product" : "products"}
+              </p>
+            </div>
+
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
+                {[...Array(9)].map((_, i) => (
+                  <div key={i} className="space-y-4">
+                    <div className="aspect-[3/4] bg-muted rounded-lg animate-pulse" />
+                    <div className="h-4 bg-muted rounded animate-pulse" />
+                    <div className="h-4 bg-muted rounded w-2/3 animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="text-center py-20">
+                <p className="text-muted-foreground">No products found matching your filters</p>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setPriceRange([0, 1000]);
+                    setSelectedCategories([]);
+                    setSelectedSizes([]);
+                    setSelectedDesigners([]);
+                  }}
+                  className="mt-4"
+                  data-testid="button-clear-filters"
+                >
+                  Clear Filters
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
