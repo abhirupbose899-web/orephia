@@ -1,0 +1,224 @@
+{
+  "app": {
+    "name": "Orephia",
+    "type": "ecommerce",
+    "description": "A luxury women’s fashion and accessories platform with AI styling, secure checkout, and global reach.",
+    "branding": {
+      "logo_text": "Orephia",
+      "slogan": "Where Elegance Meets Emotion",
+      "colors": {
+        "primary": "#B76E79",
+        "accent": "#722F37",
+        "background": "#FFFFFF",
+        "text_primary": "#2E2E2E",
+        "text_secondary": "#8A8A8A"
+      },
+      "fonts": {
+        "heading": "Playfair Display",
+        "body": "Poppins"
+      }
+    },
+    "theme": {
+      "button_style": "rounded_elevated",
+      "animation": "smooth_fade_slide",
+      "image_style": "rounded",
+      "shadow_depth": "medium"
+    },
+    "navigation": {
+      "tabs": ["Home", "Shop", "Collections", "Wishlist", "Profile"],
+      "drawer": [
+        "Home",
+        "Categories",
+        "My Orders",
+        "Loyalty Program",
+        "Orephia Blog",
+        "Contact Us",
+        "About Orephia",
+        "Privacy Policy",
+        "Terms & Conditions"
+      ]
+    },
+    "screens": {
+      "home": {
+        "components": [
+          { "type": "banner_slider", "source": "banners" },
+          { "type": "category_carousel", "source": "categories" },
+          { "type": "product_grid", "source": "new_arrivals" },
+          { "type": "ai_style_recommender", "enabled": true }
+        ]
+      },
+      "shop": {
+        "filters": ["Size", "Color", "Price", "Designer", "Occasion", "Material"],
+        "search": { "type": "smart", "features": ["text", "voice", "image"] },
+        "layout": "grid"
+      },
+      "product_details": {
+        "elements": [
+          "image_gallery_360",
+          "product_name",
+          "price",
+          "fabric_details",
+          "size_chart",
+          "description",
+          "ai_tryon_virtual",
+          "pair_with_suggestions",
+          "wishlist_button",
+          "add_to_cart_button"
+        ]
+      },
+      "cart": {
+        "features": [
+          "add_remove_update_items",
+          "apply_coupon",
+          "shipping_calculator",
+          "tax_calculator",
+          "checkout_button"
+        ]
+      },
+      "checkout": {
+        "sections": ["address_selection", "payment_method", "order_summary", "confirm_button"],
+        "gateways": ["Stripe", "Razorpay", "PayPal", "ApplePay"],
+        "currencies": ["USD", "INR", "EUR", "GBP"]
+      },
+      "profile": {
+        "tabs": [
+          "My Orders",
+          "Wishlist",
+          "Saved Addresses",
+          "Loyalty Points",
+          "Gift Cards",
+          "Logout"
+        ]
+      },
+      "admin_panel": {
+        "modules": [
+          "product_management",
+          "inventory_tracking",
+          "order_processing",
+          "refunds_returns",
+          "customer_support",
+          "content_editor",
+          "analytics_dashboard"
+        ]
+      },
+      "blog": {
+        "categories": ["Trends", "Designer Stories", "Care Tips", "Luxury Edits"],
+        "comments": true,
+        "sharing": ["Facebook", "Instagram", "Pinterest"]
+      },
+      "support_chat": {
+        "ai_chatbot": {
+          "name": "Orephia Assistant",
+          "functions": [
+            "order_tracking",
+            "style_recommendation",
+            "return_support",
+            "general_faq"
+          ]
+        }
+      }
+    },
+    "backend": {
+      "database": "MongoDB",
+      "collections": {
+        "users": {
+          "fields": ["name", "email", "password_hash", "addresses", "wishlist", "loyalty_points"]
+        },
+        "products": {
+          "fields": [
+            "title",
+            "description",
+            "price",
+            "images",
+            "category",
+            "stock",
+            "designer",
+            "tags",
+            "size_chart",
+            "care_instructions"
+          ]
+        },
+        "orders": {
+          "fields": [
+            "user_id",
+            "items",
+            "payment_status",
+            "order_status",
+            "shipping_address",
+            "date"
+          ]
+        },
+        "reviews": { "fields": ["product_id", "user_id", "rating", "comment", "timestamp"] },
+        "banners": { "fields": ["image_url", "redirect_link", "position"] },
+        "blogs": { "fields": ["title", "author", "content", "tags", "date"] }
+      },
+      "security": {
+        "auth_method": "JWT",
+        "ssl_enabled": true,
+        "data_encryption": true
+      }
+    },
+    "integrations": {
+      "payment": ["Stripe", "Razorpay", "PayPal", "ApplePay"],
+      "notifications": ["Firebase Push", "Email", "SMS"],
+      "analytics": ["Google Analytics", "Facebook Pixel"],
+      "seo": true
+    },
+    "ai_features": {
+      "personalized_recommendations": true,
+      "ai_style_assistant": true,
+      "ai_inventory_forecast": true
+    },
+    "language_support": ["English", "Hindi", "French", "Arabic"],
+    "multi_currency": true,
+    "deployment": {
+      "platforms": ["iOS", "Android", "Web"],
+      "hosting": "AWS"
+    },
+
+    "api_schema": {
+      "base_url": "https://api.orephia.com/v1",
+      "authentication": {
+        "type": "JWT",
+        "endpoints": {
+          "register": { "method": "POST", "url": "/auth/register" },
+          "login": { "method": "POST", "url": "/auth/login" },
+          "logout": { "method": "POST", "url": "/auth/logout" }
+        }
+      },
+      "products": {
+        "get_all": { "method": "GET", "url": "/products" },
+        "get_by_id": { "method": "GET", "url": "/products/{id}" },
+        "search": { "method": "POST", "url": "/products/search" }
+      },
+      "cart": {
+        "add": { "method": "POST", "url": "/cart/add" },
+        "get": { "method": "GET", "url": "/cart" },
+        "remove": { "method": "DELETE", "url": "/cart/remove/{product_id}" }
+      },
+      "checkout": {
+        "create_order": { "method": "POST", "url": "/orders/create" },
+        "process_payment": { "method": "POST", "url": "/payment/process" },
+        "get_status": { "method": "GET", "url": "/orders/status/{order_id}" }
+      },
+      "wishlist": {
+        "get": { "method": "GET", "url": "/wishlist" },
+        "add": { "method": "POST", "url": "/wishlist/add" },
+        "remove": { "method": "DELETE", "url": "/wishlist/remove/{product_id}" }
+      },
+      "user": {
+        "profile": { "method": "GET", "url": "/user/profile" },
+        "update": { "method": "PUT", "url": "/user/update" },
+        "orders": { "method": "GET", "url": "/user/orders" }
+      },
+      "admin": {
+        "manage_products": { "method": "POST", "url": "/admin/products" },
+        "analytics": { "method": "GET", "url": "/admin/analytics" }
+      },
+      "ai": {
+        "style_recommendation": { "method": "POST", "url": "/ai/style/recommend" },
+        "virtual_tryon": { "method": "POST", "url": "/ai/tryon" }
+      }
+    }
+  }
+}
