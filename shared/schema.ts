@@ -21,6 +21,8 @@ export const products = pgTable("products", {
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   images: jsonb("images").notNull().$type<string[]>(),
   category: text("category").notNull(),
+  mainCategory: text("main_category"),
+  subCategory: text("sub_category"),
   designer: text("designer"),
   stock: integer("stock").notNull().default(0),
   sizes: jsonb("sizes").$type<string[]>(),
