@@ -9,7 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { SlidersHorizontal, Search, X } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { SlidersHorizontal, Search, X, ChevronDown } from "lucide-react";
 
 export default function ShopPage() {
   const { data: products = [], isLoading } = useQuery<Product[]>({
@@ -18,12 +19,17 @@ export default function ShopPage() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [priceRange, setPriceRange] = useState([0, 1000]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedMainCategories, setSelectedMainCategories] = useState<string[]>([]);
+  const [selectedSubCategories, setSelectedSubCategories] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedDesigners, setSelectedDesigners] = useState<string[]>([]);
+  const [apparelsExpanded, setApparelsExpanded] = useState(true);
 
   // Extract unique values for filters
-  const categories = Array.from(new Set(products.map((p) => p.category)));
+  const mainCategories = Array.from(new Set(products.map((p) => p.mainCategory).filter(Boolean))) as string[];
+  const apparelSubCategories = Array.from(
+    new Set(products.filter((p) => p.mainCategory === "Apparels" && p.subCategory).map((p) => p.subCategory))
+  ) as string[];
   const designers = Array.from(new Set(products.map((p) => p.designer).filter(Boolean))) as string[];
   const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
@@ -33,11 +39,20 @@ export default function ShopPage() {
       product.description.toLowerCase().includes(searchQuery.toLowerCase());
     const price = typeof product.price === "string" ? parseFloat(product.price) : product.price;
     const matchesPrice = price >= priceRange[0] && price <= priceRange[1];
-    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category);
-    const matchesDesigner = selectedDesigners.length === 0 || (product.designer && selectedDesigners.includes(product.designer));
-    const matchesSize = selectedSizes.length === 0 || (product.sizes && product.sizes.some((s: string) => selectedSizes.includes(s)));
+    
+    const matchesMainCategory = selectedMainCategories.length === 0 || 
+      (product.mainCategory && selectedMainCategories.includes(product.mainCategory));
+    
+    const matchesSubCategory = selectedSubCategories.length === 0 || 
+      (product.subCategory && selectedSubCategories.includes(product.subCategory));
+    
+    const matchesDesigner = selectedDesigners.length === 0 || 
+      (product.designer && selectedDesigners.includes(product.designer));
+    
+    const matchesSize = selectedSizes.length === 0 || 
+      (product.sizes && product.sizes.some((s: string) => selectedSizes.includes(s)));
 
-    return matchesSearch && matchesPrice && matchesCategory && matchesDesigner && matchesSize;
+    return matchesSearch && matchesPrice && matchesMainCategory && matchesSubCategory && matchesDesigner && matchesSize;
   });
 
   const toggleFilter = (value: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
@@ -49,14 +64,16 @@ export default function ShopPage() {
   const clearAllFilters = () => {
     setSearchQuery("");
     setPriceRange([0, 1000]);
-    setSelectedCategories([]);
+    setSelectedMainCategories([]);
+    setSelectedSubCategories([]);
     setSelectedSizes([]);
     setSelectedDesigners([]);
   };
 
   const hasActiveFilters = searchQuery || 
     (priceRange[0] !== 0 || priceRange[1] !== 1000) ||
-    selectedCategories.length > 0 ||
+    selectedMainCategories.length > 0 ||
+    selectedSubCategories.length > 0 ||
     selectedSizes.length > 0 ||
     selectedDesigners.length > 0;
 
@@ -82,17 +99,59 @@ export default function ShopPage() {
       <div>
         <h3 className="font-semibold mb-4">Category</h3>
         <div className="space-y-2">
-          {categories.map((category) => (
-            <div key={category} className="flex items-center">
-              <Checkbox
-                id={`cat-${category}`}
-                checked={selectedCategories.includes(category)}
-                onCheckedChange={() => toggleFilter(category, setSelectedCategories)}
-                data-testid={`checkbox-category-${category}`}
-              />
-              <Label htmlFor={`cat-${category}`} className="ml-2 text-sm capitalize cursor-pointer">
-                {category}
-              </Label>
+          {mainCategories.map((mainCat) => (
+            <div key={mainCat}>
+              {mainCat === "Apparels" ? (
+                <Collapsible open={apparelsExpanded} onOpenChange={setApparelsExpanded}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center flex-1">
+                      <Checkbox
+                        id={`main-${mainCat}`}
+                        checked={selectedMainCategories.includes(mainCat)}
+                        onCheckedChange={() => toggleFilter(mainCat, setSelectedMainCategories)}
+                        data-testid={`checkbox-main-category-${mainCat}`}
+                      />
+                      <Label htmlFor={`main-${mainCat}`} className="ml-2 text-sm cursor-pointer">
+                        {mainCat}
+                      </Label>
+                    </div>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" data-testid="button-toggle-apparels">
+                        <ChevronDown className={`h-4 w-4 transition-transform ${apparelsExpanded ? "rotate-180" : ""}`} />
+                      </Button>
+                    </CollapsibleTrigger>
+                  </div>
+                  <CollapsibleContent>
+                    <div className="ml-6 mt-2 space-y-2">
+                      {apparelSubCategories.map((subCat) => (
+                        <div key={subCat} className="flex items-center">
+                          <Checkbox
+                            id={`sub-${subCat}`}
+                            checked={selectedSubCategories.includes(subCat)}
+                            onCheckedChange={() => toggleFilter(subCat, setSelectedSubCategories)}
+                            data-testid={`checkbox-sub-category-${subCat}`}
+                          />
+                          <Label htmlFor={`sub-${subCat}`} className="ml-2 text-sm cursor-pointer">
+                            {subCat}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              ) : (
+                <div className="flex items-center">
+                  <Checkbox
+                    id={`main-${mainCat}`}
+                    checked={selectedMainCategories.includes(mainCat)}
+                    onCheckedChange={() => toggleFilter(mainCat, setSelectedMainCategories)}
+                    data-testid={`checkbox-main-category-${mainCat}`}
+                  />
+                  <Label htmlFor={`main-${mainCat}`} className="ml-2 text-sm cursor-pointer">
+                    {mainCat}
+                  </Label>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -213,13 +272,23 @@ export default function ShopPage() {
                     />
                   </Badge>
                 )}
-                {selectedCategories.map((cat) => (
-                  <Badge key={cat} variant="secondary" className="gap-1 capitalize">
+                {selectedMainCategories.map((cat) => (
+                  <Badge key={cat} variant="secondary" className="gap-1">
                     {cat}
                     <X
                       className="h-3 w-3 cursor-pointer hover:text-destructive"
-                      onClick={() => toggleFilter(cat, setSelectedCategories)}
-                      data-testid={`button-remove-category-${cat}`}
+                      onClick={() => toggleFilter(cat, setSelectedMainCategories)}
+                      data-testid={`button-remove-main-category-${cat}`}
+                    />
+                  </Badge>
+                ))}
+                {selectedSubCategories.map((cat) => (
+                  <Badge key={cat} variant="secondary" className="gap-1">
+                    {cat}
+                    <X
+                      className="h-3 w-3 cursor-pointer hover:text-destructive"
+                      onClick={() => toggleFilter(cat, setSelectedSubCategories)}
+                      data-testid={`button-remove-sub-category-${cat}`}
                     />
                   </Badge>
                 ))}
