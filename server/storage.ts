@@ -15,6 +15,8 @@ import {
   InsertHomepageContent,
   Category,
   InsertCategory,
+  LoyaltyTransaction,
+  InsertLoyaltyTransaction,
   users,
   products,
   wishlistItems,
@@ -23,6 +25,7 @@ import {
   coupons,
   homepageContent,
   categories,
+  loyaltyTransactions,
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -80,6 +83,12 @@ export interface IStorage {
   
   // Admin methods
   getAdminStats(): Promise<any>;
+  
+  // Loyalty Points methods
+  getUserLoyaltyPoints(userId: string): Promise<number>;
+  addLoyaltyPoints(userId: string, points: number, description: string, orderId?: string): Promise<void>;
+  redeemLoyaltyPoints(userId: string, points: number, description: string, orderId?: string): Promise<boolean>;
+  getUserLoyaltyTransactions(userId: string): Promise<LoyaltyTransaction[]>;
   
   // Session store
   sessionStore: any;
@@ -324,6 +333,59 @@ export class DatabaseStorage implements IStorage {
       totalRevenue: revenueData?.total || "0",
       pendingOrders: pendingOrders[0]?.count || 0,
     };
+  }
+
+  // Loyalty Points methods
+  async getUserLoyaltyPoints(userId: string): Promise<number> {
+    const [user] = await db.select({ loyaltyPoints: users.loyaltyPoints }).from(users).where(eq(users.id, userId));
+    return user?.loyaltyPoints || 0;
+  }
+
+  async addLoyaltyPoints(userId: string, points: number, description: string, orderId?: string): Promise<void> {
+    // Add transaction record
+    await db.insert(loyaltyTransactions).values({
+      userId,
+      type: 'earned',
+      points,
+      description,
+      orderId,
+    });
+
+    // Update user's loyalty points balance
+    await db.update(users)
+      .set({ loyaltyPoints: sql`${users.loyaltyPoints} + ${points}` })
+      .where(eq(users.id, userId));
+  }
+
+  async redeemLoyaltyPoints(userId: string, points: number, description: string, orderId?: string): Promise<boolean> {
+    // Check if user has enough points
+    const currentPoints = await this.getUserLoyaltyPoints(userId);
+    if (currentPoints < points) {
+      return false;
+    }
+
+    // Add transaction record
+    await db.insert(loyaltyTransactions).values({
+      userId,
+      type: 'redeemed',
+      points,
+      description,
+      orderId,
+    });
+
+    // Update user's loyalty points balance
+    await db.update(users)
+      .set({ loyaltyPoints: sql`${users.loyaltyPoints} - ${points}` })
+      .where(eq(users.id, userId));
+
+    return true;
+  }
+
+  async getUserLoyaltyTransactions(userId: string): Promise<LoyaltyTransaction[]> {
+    return await db.select()
+      .from(loyaltyTransactions)
+      .where(eq(loyaltyTransactions.userId, userId))
+      .orderBy(sql`${loyaltyTransactions.createdAt} DESC`);
   }
 }
 

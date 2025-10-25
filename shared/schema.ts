@@ -13,6 +13,7 @@ export const users = pgTable("users", {
   country: text("country"),
   currency: text("currency").default("INR"),
   role: text("role").notNull().default("customer"),
+  loyaltyPoints: integer("loyalty_points").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -102,6 +103,17 @@ export const homepageContent = pgTable("homepage_content", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Loyalty Transactions
+export const loyaltyTransactions = pgTable("loyalty_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  type: text("type").notNull(), // "earned" or "redeemed"
+  points: integer("points").notNull(),
+  description: text("description").notNull(),
+  orderId: varchar("order_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Orders
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -114,6 +126,8 @@ export const orders = pgTable("orders", {
   tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   couponCode: text("coupon_code"),
+  pointsRedeemed: integer("points_redeemed").default(0),
+  pointsEarned: integer("points_earned").default(0),
   paymentStatus: text("payment_status").notNull().default("pending"),
   orderStatus: text("order_status").notNull().default("processing"),
   razorpayOrderId: text("razorpay_order_id"),
@@ -193,6 +207,11 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
   createdAt: true,
 });
 
+export const insertLoyaltyTransactionSchema = createInsertSchema(loyaltyTransactions).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Select types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -210,6 +229,8 @@ export type HomepageContent = typeof homepageContent.$inferSelect;
 export type InsertHomepageContent = z.infer<typeof insertHomepageContentSchema>;
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type LoyaltyTransaction = typeof loyaltyTransactions.$inferSelect;
+export type InsertLoyaltyTransaction = z.infer<typeof insertLoyaltyTransactionSchema>;
 
 // Cart schema for validation
 export const cartItemSchema = z.object({
