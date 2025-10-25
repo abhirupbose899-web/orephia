@@ -54,11 +54,7 @@ export default function AdminProductsPage() {
 
   const updateStockMutation = useMutation({
     mutationFn: async ({ id, stock }: { id: string; stock: number }) => {
-      return await apiRequest(`/api/admin/products/${id}/stock`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stock }),
-      });
+      return await apiRequest("PATCH", `/api/admin/products/${id}/stock`, { stock });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
@@ -71,9 +67,7 @@ export default function AdminProductsPage() {
 
   const deleteProductMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await apiRequest(`/api/admin/products/${id}`, {
-        method: "DELETE",
-      });
+      return await apiRequest("DELETE", `/api/admin/products/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
@@ -86,11 +80,7 @@ export default function AdminProductsPage() {
 
   const createProductMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest("/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("POST", "/api/products", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
@@ -104,12 +94,8 @@ export default function AdminProductsPage() {
   });
 
   const updateProductMutation = useMutation({
-    mutationFn: async (data: { id: string; updates: Partial<Product> }) => {
-      return await apiRequest(`/api/admin/products/${data.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data.updates),
-      });
+    mutationFn: async (data: { id: string; updates: any }) => {
+      return await apiRequest("PATCH", `/api/admin/products/${data.id}`, data.updates);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });

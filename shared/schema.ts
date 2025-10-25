@@ -81,6 +81,16 @@ export const coupons = pgTable("coupons", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Homepage content
+export const homepageContent = pgTable("homepage_content", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  heroTitle: text("hero_title"),
+  heroSubtitle: text("hero_subtitle"),
+  heroImage: text("hero_image"),
+  featuredProductIds: jsonb("featured_product_ids").$type<string[]>(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Orders
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -160,6 +170,11 @@ export const insertCouponSchema = createInsertSchema(coupons).omit({
   usedCount: true,
 });
 
+export const insertHomepageContentSchema = createInsertSchema(homepageContent).omit({
+  id: true,
+  updatedAt: true,
+});
+
 // Select types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -173,6 +188,8 @@ export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Coupon = typeof coupons.$inferSelect;
 export type InsertCoupon = z.infer<typeof insertCouponSchema>;
+export type HomepageContent = typeof homepageContent.$inferSelect;
+export type InsertHomepageContent = z.infer<typeof insertHomepageContentSchema>;
 
 // Cart schema for validation
 export const cartItemSchema = z.object({
