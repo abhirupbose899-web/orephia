@@ -37,6 +37,8 @@ export default function WishlistPage() {
     queryKey: ["/api/wishlist"],
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 15,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
