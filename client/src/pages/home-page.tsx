@@ -82,13 +82,6 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <div className="w-5 h-9 border border-[#8e4e4f]/60 rounded-full flex justify-center pt-2 bg-white/5 backdrop-blur-sm">
-            <div className="w-0.5 h-2 bg-[#8e4e4f]/80 rounded-full" />
-          </div>
-        </div>
       </section>
 
       {/* Trust Badges */}
