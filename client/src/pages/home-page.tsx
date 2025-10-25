@@ -16,7 +16,9 @@ export default function HomePage() {
     queryKey: ["/api/homepage"],
   });
 
-  const newArrivals = products.slice(0, 8);
+  // Get products marked as new arrivals, fallback to first 8 if none
+  const newArrivals = products.filter(p => p.newArrival).slice(0, 8);
+  const displayNewArrivals = newArrivals.length > 0 ? newArrivals : products.slice(0, 8);
   
   const featuredProducts = homepageContent?.featuredProductIds && homepageContent.featuredProductIds.length > 0
     ? products.filter(p => homepageContent.featuredProductIds?.includes(p.id))
@@ -128,7 +130,7 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-              {newArrivals.map((product) => (
+              {displayNewArrivals.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>

@@ -23,6 +23,7 @@ export default function ShopPage() {
   const [selectedSubCategories, setSelectedSubCategories] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedDesigners, setSelectedDesigners] = useState<string[]>([]);
+  const [showNewArrivals, setShowNewArrivals] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
     "Apparels": true,
     "Shoes": true,
@@ -66,7 +67,9 @@ export default function ShopPage() {
     const matchesSize = selectedSizes.length === 0 || 
       (product.sizes && product.sizes.some((s: string) => selectedSizes.includes(s)));
 
-    return matchesSearch && matchesPrice && matchesMainCategory && matchesSubCategory && matchesDesigner && matchesSize;
+    const matchesNewArrivals = !showNewArrivals || product.newArrival === true;
+
+    return matchesSearch && matchesPrice && matchesMainCategory && matchesSubCategory && matchesDesigner && matchesSize && matchesNewArrivals;
   });
 
   const toggleFilter = (value: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
@@ -82,6 +85,7 @@ export default function ShopPage() {
     setSelectedSubCategories([]);
     setSelectedSizes([]);
     setSelectedDesigners([]);
+    setShowNewArrivals(false);
   };
 
   const hasActiveFilters = searchQuery || 
@@ -89,10 +93,26 @@ export default function ShopPage() {
     selectedMainCategories.length > 0 ||
     selectedSubCategories.length > 0 ||
     selectedSizes.length > 0 ||
-    selectedDesigners.length > 0;
+    selectedDesigners.length > 0 ||
+    showNewArrivals;
 
   const FilterPanel = () => (
     <div className="space-y-6">
+      <div>
+        <h3 className="font-semibold mb-4">New Arrivals</h3>
+        <div className="flex items-center">
+          <Checkbox
+            id="new-arrivals"
+            checked={showNewArrivals}
+            onCheckedChange={(checked) => setShowNewArrivals(checked as boolean)}
+            data-testid="checkbox-new-arrivals"
+          />
+          <Label htmlFor="new-arrivals" className="ml-2 text-sm cursor-pointer">
+            Show only new arrivals
+          </Label>
+        </div>
+      </div>
+
       <div>
         <h3 className="font-semibold mb-4">Price Range</h3>
         <Slider
@@ -277,6 +297,16 @@ export default function ShopPage() {
             {hasActiveFilters && (
               <div className="mb-6 flex flex-wrap items-center gap-2">
                 <span className="text-sm font-medium">Active Filters:</span>
+                {showNewArrivals && (
+                  <Badge variant="secondary" className="gap-1">
+                    New Arrivals
+                    <X
+                      className="h-3 w-3 cursor-pointer hover:text-destructive"
+                      onClick={() => setShowNewArrivals(false)}
+                      data-testid="button-remove-new-arrivals"
+                    />
+                  </Badge>
+                )}
                 {searchQuery && (
                   <Badge variant="secondary" className="gap-1">
                     Search: {searchQuery}
