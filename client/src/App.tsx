@@ -8,6 +8,7 @@ import { CartProvider } from "@/hooks/use-cart";
 import { CurrencyProvider } from "@/hooks/use-currency";
 import { ProtectedRoute } from "./lib/protected-route";
 import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
 import { AdminLayout } from "@/components/admin-layout";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
@@ -19,6 +20,10 @@ import CheckoutPage from "@/pages/checkout-page";
 import ProfilePage from "@/pages/profile-page";
 import CollectionsPage from "@/pages/collections-page";
 import StyleJourneyPage from "@/pages/style-journey-page";
+import AboutPage from "@/pages/about-page";
+import ContactPage from "@/pages/contact-page";
+import PrivacyPage from "@/pages/privacy-page";
+import DisclaimerPage from "@/pages/disclaimer-page";
 import AdminDashboardPage from "@/pages/admin/dashboard-page";
 import AdminHomepagePage from "@/pages/admin/homepage-page";
 import AdminProductsPage from "@/pages/admin/products-page";
@@ -38,6 +43,10 @@ function Router() {
       <Route path="/collections" component={CollectionsPage} />
       <ProtectedRoute path="/style-journey" component={StyleJourneyPage} />
       <ProtectedRoute path="/wishlist" component={WishlistPage} />
+      <Route path="/about" component={AboutPage} />
+      <Route path="/contact" component={ContactPage} />
+      <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/disclaimer" component={DisclaimerPage} />
       <ProtectedRoute path="/checkout" component={CheckoutPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
       <Route path="/admin">
@@ -99,6 +108,7 @@ function App() {
                 <main className="flex-1">
                   <Router />
                 </main>
+                <Footer />
               </div>
               <Toaster />
             </TooltipProvider>
