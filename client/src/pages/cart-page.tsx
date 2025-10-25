@@ -55,8 +55,10 @@ export default function CartPage() {
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   
-  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
+  const { data: products = [], isLoading: productsLoading, isFetching } = useQuery<Product[]>({
     queryKey: ["/api/products"],
+    staleTime: 1000 * 60 * 10, // 10 minutes - products don't change often
+    gcTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
   });
 
   const validateCouponMutation = useMutation({
@@ -160,7 +162,10 @@ export default function CartPage() {
     }
   }, []);
 
-  if (productsLoading && cart.length > 0) {
+  // Only show skeleton on initial load when we have no cached data
+  const isInitialLoading = productsLoading && !products.length && cart.length > 0;
+  
+  if (isInitialLoading) {
     return <CartSkeleton />;
   }
 
@@ -203,6 +208,7 @@ export default function CartPage() {
                         src={images[0] || "/placeholder-product.jpg"}
                         alt={item.product.title}
                         className="w-24 h-24 object-cover rounded-lg"
+                        loading="lazy"
                         data-testid={`img-cart-item-${idx}`}
                       />
                     </Link>

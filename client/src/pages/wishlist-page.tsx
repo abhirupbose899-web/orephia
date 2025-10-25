@@ -35,10 +35,13 @@ function WishlistSkeleton() {
 export default function WishlistPage() {
   const { data: wishlist = [], isLoading: wishlistLoading } = useQuery<{ productId: string }[]>({
     queryKey: ["/api/wishlist"],
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
+  const { data: products = [], isLoading: productsLoading, isFetching } = useQuery<Product[]>({
     queryKey: ["/api/products"],
+    staleTime: 1000 * 60 * 10, // 10 minutes - products don't change often
+    gcTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
   });
 
   const wishlistProducts = useMemo(() => {
@@ -47,9 +50,10 @@ export default function WishlistPage() {
     return products.filter(product => wishlistIds.has(product.id));
   }, [wishlist, products]);
 
-  const isLoading = wishlistLoading || productsLoading;
+  // Only show skeleton on initial load, not on background refetch
+  const isInitialLoading = wishlistLoading || (productsLoading && !products.length);
 
-  if (isLoading) {
+  if (isInitialLoading) {
     return <WishlistSkeleton />;
   }
 
