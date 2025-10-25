@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Order } from "@shared/schema";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -21,25 +22,31 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { ShoppingCart, Sparkles, Package, Truck, CheckCircle2, XCircle } from "lucide-react";
 
 export default function AdminOrdersPage() {
   const { toast } = useToast();
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const { data: orders = [], isLoading } = useQuery<Order[]>({
-    queryKey: ["/api/admin/orders", statusFilter !== "all" ? { status: statusFilter } : {}],
+  const { data: allOrders = [], isLoading } = useQuery<Order[]>({
+    queryKey: ["/api/admin/orders"],
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Admin orders should always show fresh data
   });
+
+  // Filter orders client-side based on status filter
+  const orders = statusFilter === "all" 
+    ? allOrders 
+    : allOrders.filter(order => order.orderStatus === statusFilter);
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      return await apiRequest(`/api/admin/orders/${id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderStatus: status }),
-      });
+      return await apiRequest("PATCH", `/api/admin/orders/${id}/status`, { orderStatus: status });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/admin/stats"] });
       toast({ title: "Order status updated" });
     },
     onError: () => {
@@ -48,29 +55,71 @@ export default function AdminOrdersPage() {
   });
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive"> = {
-      processing: "default",
-      shipped: "secondary",
-      delivered: "secondary",
-      cancelled: "destructive",
+    const configs: Record<string, { variant: "default" | "secondary" | "destructive"; className: string; icon: any }> = {
+      processing: { 
+        variant: "default", 
+        className: "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20",
+        icon: Package
+      },
+      shipped: { 
+        variant: "secondary", 
+        className: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
+        icon: Truck
+      },
+      delivered: { 
+        variant: "secondary", 
+        className: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
+        icon: CheckCircle2
+      },
+      cancelled: { 
+        variant: "destructive",
+        className: "",
+        icon: XCircle
+      },
     };
-    return <Badge variant={variants[status] || "default"}>{status}</Badge>;
+    const config = configs[status] || configs.processing;
+    const Icon = config.icon;
+    return (
+      <Badge variant={config.variant} className={config.className}>
+        <Icon className="h-3 w-3 mr-1" />
+        {status}
+      </Badge>
+    );
   };
 
   const getPaymentBadge = (status: string) => {
     return status === "paid" ? (
-      <Badge variant="secondary">Paid</Badge>
+      <Badge variant="secondary" className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+        <CheckCircle2 className="h-3 w-3 mr-1" />
+        Paid
+      </Badge>
     ) : (
-      <Badge variant="destructive">Pending</Badge>
+      <Badge variant="destructive">
+        <XCircle className="h-3 w-3 mr-1" />
+        Pending
+      </Badge>
     );
   };
+
+  const processingOrders = orders.filter(o => o.orderStatus === "processing").length;
+  const shippedOrders = orders.filter(o => o.orderStatus === "shipped").length;
+  const deliveredOrders = orders.filter(o => o.orderStatus === "delivered").length;
 
   if (isLoading) {
     return (
       <div className="p-8">
         <div className="mb-8">
-          <h1 className="font-serif text-4xl font-semibold mb-2">Orders</h1>
-          <p className="text-muted-foreground">Loading orders...</p>
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
+              <ShoppingCart className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="font-serif text-4xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Orders
+              </h1>
+              <p className="text-muted-foreground">Loading orders...</p>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -78,23 +127,80 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="p-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="font-serif text-4xl font-semibold mb-2">Orders</h1>
-          <p className="text-muted-foreground">Manage customer orders</p>
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
+              <ShoppingCart className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="font-serif text-4xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Orders
+              </h1>
+              <p className="text-muted-foreground">Manage customer orders</p>
+            </div>
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48" data-testid="select-status-filter">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Orders</SelectItem>
+              <SelectItem value="processing">Processing</SelectItem>
+              <SelectItem value="shipped">Shipped</SelectItem>
+              <SelectItem value="delivered">Delivered</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48" data-testid="select-status-filter">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Orders</SelectItem>
-            <SelectItem value="processing">Processing</SelectItem>
-            <SelectItem value="shipped">Shipped</SelectItem>
-            <SelectItem value="delivered">Delivered</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Orders</p>
+                  <p className="text-2xl font-bold">{orders.length}</p>
+                </div>
+                <ShoppingCart className="h-8 w-8 text-primary" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-2 border-orange-500/20 bg-gradient-to-br from-orange-500/5 to-amber-500/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Processing</p>
+                  <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{processingOrders}</p>
+                </div>
+                <Package className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-2 border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-cyan-500/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Shipped</p>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{shippedOrders}</p>
+                </div>
+                <Truck className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-2 border-green-500/20 bg-gradient-to-br from-green-500/5 to-emerald-500/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Delivered</p>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">{deliveredOrders}</p>
+                </div>
+                <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="border rounded-md">

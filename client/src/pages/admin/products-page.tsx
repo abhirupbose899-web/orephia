@@ -11,6 +11,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { 
+  Card,
+  CardContent,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +33,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pencil, Trash2, Package } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Search, Sparkles, Filter } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
@@ -39,13 +43,21 @@ export default function AdminProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [stockFilter, setStockFilter] = useState<"all" | "low" | "out">("all");
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Admin products should always show fresh data
   });
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/admin/categories"],
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Admin categories should always show fresh data
   });
 
   // Get unique main categories
@@ -81,8 +93,9 @@ export default function AdminProductsPage() {
     mutationFn: async ({ id, stock }: { id: string; stock: number }) => {
       return await apiRequest("PATCH", `/api/admin/products/${id}/stock`, { stock });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/admin/stats"] });
       toast({ title: "Stock updated successfully" });
     },
     onError: () => {
@@ -94,8 +107,9 @@ export default function AdminProductsPage() {
     mutationFn: async (id: string) => {
       return await apiRequest("DELETE", `/api/admin/products/${id}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/admin/stats"] });
       toast({ title: "Product deleted successfully" });
     },
     onError: () => {
@@ -107,8 +121,9 @@ export default function AdminProductsPage() {
     mutationFn: async (data: any) => {
       return await apiRequest("POST", "/api/products", data);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/admin/stats"] });
       toast({ title: "Product created successfully" });
       setDialogOpen(false);
       setIsCreating(false);
@@ -122,8 +137,9 @@ export default function AdminProductsPage() {
     mutationFn: async (data: { id: string; updates: any }) => {
       return await apiRequest("PATCH", `/api/admin/products/${data.id}`, data.updates);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/admin/stats"] });
       toast({ title: "Product updated successfully" });
       setDialogOpen(false);
       setEditingProduct(null);
@@ -204,12 +220,41 @@ export default function AdminProductsPage() {
     }
   };
 
+  // Filter products based on search and stock filter
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      const matchesSearch = !searchQuery || 
+        product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.designer?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.mainCategory?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStock = 
+        stockFilter === "all" ||
+        (stockFilter === "low" && product.stock > 0 && product.stock < 10) ||
+        (stockFilter === "out" && product.stock === 0);
+      
+      return matchesSearch && matchesStock;
+    });
+  }, [products, searchQuery, stockFilter]);
+
+  const lowStockCount = products.filter(p => p.stock > 0 && p.stock < 10).length;
+  const outOfStockCount = products.filter(p => p.stock === 0).length;
+
   if (isLoading) {
     return (
       <div className="p-8">
         <div className="mb-8">
-          <h1 className="font-serif text-4xl font-semibold mb-2">Products</h1>
-          <p className="text-muted-foreground">Loading products...</p>
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
+              <Package className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="font-serif text-4xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Products
+              </h1>
+              <p className="text-muted-foreground">Loading products...</p>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -217,18 +262,121 @@ export default function AdminProductsPage() {
 
   return (
     <div className="p-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="font-serif text-4xl font-semibold mb-2">Products</h1>
-          <p className="text-muted-foreground">Manage your product catalog</p>
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
+              <Package className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="font-serif text-4xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Products
+              </h1>
+              <p className="text-muted-foreground">Manage your product catalog</p>
+            </div>
+          </div>
+          <Button onClick={handleCreate} data-testid="button-add-product" className="bg-gradient-to-r from-primary to-accent hover:opacity-90">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Product
+          </Button>
         </div>
-        <Button onClick={handleCreate} data-testid="button-add-product">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Product
-        </Button>
+        
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Products</p>
+                  <p className="text-2xl font-bold">{products.length}</p>
+                </div>
+                <Package className="h-8 w-8 text-primary" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-2 border-orange-500/20 bg-gradient-to-br from-orange-500/5 to-amber-500/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Low Stock</p>
+                  <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{lowStockCount}</p>
+                </div>
+                <Badge variant="destructive">{lowStockCount} items</Badge>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-2 border-red-500/20 bg-gradient-to-br from-red-500/5 to-rose-500/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Out of Stock</p>
+                  <p className="text-2xl font-bold text-red-600 dark:text-red-400">{outOfStockCount}</p>
+                </div>
+                <Badge variant="destructive">{outOfStockCount} items</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="flex gap-4 flex-wrap">
+          <div className="relative flex-1 min-w-[300px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search products by name, designer, or category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+              data-testid="input-search-products"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant={stockFilter === "all" ? "default" : "outline"}
+              onClick={() => setStockFilter("all")}
+              data-testid="button-filter-all"
+            >
+              All
+            </Button>
+            <Button
+              variant={stockFilter === "low" ? "default" : "outline"}
+              onClick={() => setStockFilter("low")}
+              data-testid="button-filter-low"
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              Low Stock
+            </Button>
+            <Button
+              variant={stockFilter === "out" ? "default" : "outline"}
+              onClick={() => setStockFilter("out")}
+              data-testid="button-filter-out"
+            >
+              Out of Stock
+            </Button>
+          </div>
+        </div>
       </div>
 
-      <div className="border rounded-md">
+      {filteredProducts.length === 0 ? (
+        <Card className="p-12">
+          <div className="text-center">
+            <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-semibold mb-2">No products found</h3>
+            <p className="text-muted-foreground mb-6">
+              {searchQuery || stockFilter !== "all" 
+                ? "Try adjusting your search or filters" 
+                : "Get started by adding your first product"}
+            </p>
+            {!searchQuery && stockFilter === "all" && (
+              <Button onClick={handleCreate}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Product
+              </Button>
+            )}
+          </div>
+        </Card>
+      ) : (
+        <div className="border rounded-md">
         <Table>
           <TableHeader>
             <TableRow>
@@ -241,7 +389,7 @@ export default function AdminProductsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <TableRow key={product.id} data-testid={`row-product-${product.id}`}>
                 <TableCell>
                   <div className="flex items-center gap-3">
@@ -295,10 +443,12 @@ export default function AdminProductsPage() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  {product.stock < 10 ? (
-                    <Badge variant="destructive" data-testid={`badge-status-${product.id}`}>Low Stock</Badge>
+                  {product.stock === 0 ? (
+                    <Badge variant="destructive" data-testid={`badge-status-${product.id}`}>Out of Stock</Badge>
+                  ) : product.stock < 10 ? (
+                    <Badge variant="destructive" className="bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20" data-testid={`badge-status-${product.id}`}>Low Stock</Badge>
                   ) : (
-                    <Badge variant="secondary" data-testid={`badge-status-${product.id}`}>In Stock</Badge>
+                    <Badge variant="secondary" className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20" data-testid={`badge-status-${product.id}`}>In Stock</Badge>
                   )}
                 </TableCell>
                 <TableCell className="text-right">
@@ -329,7 +479,8 @@ export default function AdminProductsPage() {
             ))}
           </TableBody>
         </Table>
-      </div>
+        </div>
+      )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
