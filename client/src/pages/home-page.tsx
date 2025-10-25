@@ -64,10 +64,12 @@ export default function HomePage() {
                 Explore Collection
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="text-base backdrop-blur-md bg-white/10 text-white border-2 border-white/50 shadow-xl" data-testid="button-ai-stylist">
-              <Sparkles className="mr-2 h-5 w-5" />
-              AI Style Assistant
-            </Button>
+            <Link href="/shop">
+              <Button size="lg" variant="outline" className="text-base backdrop-blur-md bg-white/10 text-white border-2 border-white/50 shadow-xl" data-testid="button-ai-stylist">
+                <Sparkles className="mr-2 h-5 w-5" />
+                AI Style Assistant
+              </Button>
+            </Link>
           </div>
           
           {/* Decorative Elements */}
@@ -212,10 +214,12 @@ export default function HomePage() {
                       <span className="text-foreground">Trending looks curated for you</span>
                     </li>
                   </ul>
-                  <Button size="lg" className="w-full md:w-auto" data-testid="button-start-styling">
-                    <Sparkles className="mr-2 h-5 w-5" />
-                    Start Your Style Journey
-                  </Button>
+                  <Link href="/shop">
+                    <Button size="lg" className="w-full md:w-auto" data-testid="button-start-styling">
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      Start Your Style Journey
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </CardContent>
