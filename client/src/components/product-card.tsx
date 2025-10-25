@@ -22,6 +22,10 @@ export function ProductCard({ product, hidePrice = false }: ProductCardProps) {
   const { data: wishlist = [] } = useQuery<{ productId: string }[]>({
     queryKey: ["/api/wishlist"],
     enabled: !!user,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 15,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const isInWishlist = wishlist.some((item) => item.productId === product.id);

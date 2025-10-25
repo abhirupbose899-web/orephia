@@ -11,13 +11,15 @@ import { Badge } from "@/components/ui/badge";
 export default function HomePage() {
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
-    staleTime: 1000 * 60 * 10, // 10 minutes
-    gcTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
+    refetchOnWindowFocus: false,
   });
 
   const { data: homepageContent } = useQuery<HomepageContent>({
     queryKey: ["/api/homepage"],
     staleTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
   });
 
   const newArrivals = products.filter(p => p.newArrival).slice(0, 8);
