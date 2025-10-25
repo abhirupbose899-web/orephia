@@ -125,7 +125,7 @@ export function Header() {
                   data-testid="button-profile"
                 >
                   <span className="hidden md:block text-sm font-medium">
-                    Hi, {user.fullName || user.username}
+                    Hi, {(user.fullName || user.username).split(' ')[0]}
                   </span>
                   <User className="h-5 w-5" />
                 </button>
