@@ -6,6 +6,7 @@ import {
   ShoppingCart, 
   Tag,
   Home,
+  FolderTree,
   LogOut 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,7 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [location] = useLocation();
   const { toast } = useToast();
 
@@ -53,6 +54,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       title: "Products",
       href: "/admin/products",
       icon: Package,
+    },
+    {
+      title: "Categories",
+      href: "/admin/categories",
+      icon: FolderTree,
     },
     {
       title: "Orders",

@@ -20,6 +20,7 @@ import CollectionsPage from "@/pages/collections-page";
 import AdminDashboardPage from "@/pages/admin/dashboard-page";
 import AdminHomepagePage from "@/pages/admin/homepage-page";
 import AdminProductsPage from "@/pages/admin/products-page";
+import AdminCategoriesPage from "@/pages/admin/categories-page";
 import AdminOrdersPage from "@/pages/admin/orders-page";
 import AdminCouponsPage from "@/pages/admin/coupons-page";
 import NotFound from "@/pages/not-found";
@@ -54,6 +55,13 @@ function Router() {
         {() => (
           <AdminLayout>
             <AdminProductsPage />
+          </AdminLayout>
+        )}
+      </Route>
+      <Route path="/admin/categories">
+        {() => (
+          <AdminLayout>
+            <AdminCategoriesPage />
           </AdminLayout>
         )}
       </Route>
