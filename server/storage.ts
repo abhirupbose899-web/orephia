@@ -17,6 +17,8 @@ import {
   InsertCategory,
   LoyaltyTransaction,
   InsertLoyaltyTransaction,
+  StyleProfile,
+  InsertStyleProfile,
   users,
   products,
   wishlistItems,
@@ -26,6 +28,7 @@ import {
   homepageContent,
   categories,
   loyaltyTransactions,
+  styleProfiles,
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -89,6 +92,10 @@ export interface IStorage {
   addLoyaltyPoints(userId: string, points: number, description: string, orderId?: string): Promise<void>;
   redeemLoyaltyPoints(userId: string, points: number, description: string, orderId?: string): Promise<boolean>;
   getUserLoyaltyTransactions(userId: string): Promise<LoyaltyTransaction[]>;
+  
+  // Style Profile methods
+  getStyleProfile(userId: string): Promise<StyleProfile | undefined>;
+  createOrUpdateStyleProfile(userId: string, data: InsertStyleProfile): Promise<StyleProfile>;
   
   // Session store
   sessionStore: any;
@@ -386,6 +393,27 @@ export class DatabaseStorage implements IStorage {
       .from(loyaltyTransactions)
       .where(eq(loyaltyTransactions.userId, userId))
       .orderBy(sql`${loyaltyTransactions.createdAt} DESC`);
+  }
+
+  // Style Profile methods
+  async getStyleProfile(userId: string): Promise<StyleProfile | undefined> {
+    const [profile] = await db.select().from(styleProfiles).where(eq(styleProfiles.userId, userId));
+    return profile || undefined;
+  }
+
+  async createOrUpdateStyleProfile(userId: string, data: InsertStyleProfile): Promise<StyleProfile> {
+    const existing = await this.getStyleProfile(userId);
+    
+    if (existing) {
+      const [updated] = await db.update(styleProfiles)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(styleProfiles.userId, userId))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db.insert(styleProfiles).values({ ...data, userId }).returning();
+      return created;
+    }
   }
 }
 

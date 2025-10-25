@@ -18,6 +18,7 @@ import WishlistPage from "@/pages/wishlist-page";
 import CheckoutPage from "@/pages/checkout-page";
 import ProfilePage from "@/pages/profile-page";
 import CollectionsPage from "@/pages/collections-page";
+import StyleJourneyPage from "@/pages/style-journey-page";
 import AdminDashboardPage from "@/pages/admin/dashboard-page";
 import AdminHomepagePage from "@/pages/admin/homepage-page";
 import AdminProductsPage from "@/pages/admin/products-page";
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/product/:id" component={ProductDetailPage} />
       <Route path="/cart" component={CartPage} />
       <Route path="/collections" component={CollectionsPage} />
+      <ProtectedRoute path="/style-journey" component={StyleJourneyPage} />
       <ProtectedRoute path="/wishlist" component={WishlistPage} />
       <ProtectedRoute path="/checkout" component={CheckoutPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />

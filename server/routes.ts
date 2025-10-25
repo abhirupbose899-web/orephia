@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-import { getStyleRecommendations } from "./openai";
+import { getStyleRecommendations, getStyleJourneyRecommendations } from "./openai";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import { eq } from "drizzle-orm";
@@ -16,7 +16,8 @@ import {
   insertCouponSchema,
   insertHomepageContentSchema,
   insertCategorySchema,
-  addToCartSchema
+  addToCartSchema,
+  insertStyleProfileSchema
 } from "@shared/schema";
 
 const razorpay = new Razorpay({
@@ -399,6 +400,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(recommendations);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  // AI Style Journey - Comprehensive questionnaire-based recommendations
+  app.post("/api/ai/style-journey", async (req, res) => {
+    try {
+      const { questionnaireAnswers } = req.body;
+      
+      if (!questionnaireAnswers) {
+        return res.status(400).json({ message: "Questionnaire answers required" });
+      }
+
+      // Fetch available products from catalog
+      const allProducts = await storage.getAllProducts();
+      
+      // Filter products based on budget range if specified
+      let filteredProducts = allProducts;
+      if (questionnaireAnswers.investmentLevel?.budgetRange) {
+        const budgetRange = questionnaireAnswers.investmentLevel.budgetRange;
+        filteredProducts = allProducts.filter(p => {
+          const price = typeof p.price === 'string' ? parseFloat(p.price) : p.price;
+          if (budgetRange.includes('under')) return price < 5000;
+          if (budgetRange.includes('mid')) return price >= 5000 && price < 15000;
+          if (budgetRange.includes('luxury')) return price >= 15000;
+          return true;
+        });
+      }
+
+      // Get AI recommendations
+      const aiInsights = await getStyleJourneyRecommendations(
+        questionnaireAnswers,
+        filteredProducts
+      );
+
+      res.json({
+        success: true,
+        aiInsights,
+        questionnaireAnswers
+      });
+    } catch (error: any) {
+      console.error("Style Journey error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Style Profile routes
+  app.get("/api/style-profiles/me", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const profile = await storage.getStyleProfile(req.user!.id);
+      res.json(profile || null);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/style-profiles", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const validatedData = insertStyleProfileSchema.parse(req.body);
+      const profile = await storage.createOrUpdateStyleProfile(
+        req.user!.id,
+        validatedData
+      );
+      res.status(201).json(profile);
+    } catch (error: any) {
+      console.error("Style profile save error:", error);
+      res.status(400).json({ message: error.message });
     }
   });
 

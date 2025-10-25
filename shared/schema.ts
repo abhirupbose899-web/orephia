@@ -114,6 +114,17 @@ export const loyaltyTransactions = pgTable("loyalty_transactions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Style Profiles
+export const styleProfiles = pgTable("style_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique(),
+  questionnaireAnswers: jsonb("questionnaire_answers").notNull().$type<StyleQuestionnaireAnswers>(),
+  aiInsights: jsonb("ai_insights").$type<AIStyleInsights>(),
+  preferredProductIds: jsonb("preferred_product_ids").$type<string[]>(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Orders
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -155,6 +166,48 @@ export type Address = {
   postalCode: string;
   country: string;
   phone: string;
+};
+
+export type StyleQuestionnaireAnswers = {
+  stylePalette: {
+    preferredColors: string[];
+    avoidColors: string[];
+    patterns: string[];
+  };
+  workPersona: {
+    workEnvironment: string;
+    dressCode: string;
+    workDaysPerWeek?: number;
+  };
+  occasions: {
+    dailyWear: boolean;
+    workEvents: boolean;
+    casualOutings: boolean;
+    formalEvents: boolean;
+    parties: boolean;
+    travel: boolean;
+  };
+  bodyComfort: {
+    preferredFit: string;
+    comfortableLengths: string[];
+    bodyType?: string;
+  };
+  investmentLevel: {
+    budgetRange: string;
+    priorityItems: string[];
+  };
+};
+
+export type AIStyleInsights = {
+  colorPalette: string[];
+  silhouettes: string[];
+  styleTips: string[];
+  catalogPicks: {
+    productId: string;
+    title: string;
+    reason: string;
+  }[];
+  confidenceNotes?: string;
 };
 
 // Insert schemas
@@ -212,6 +265,13 @@ export const insertLoyaltyTransactionSchema = createInsertSchema(loyaltyTransact
   createdAt: true,
 });
 
+export const insertStyleProfileSchema = createInsertSchema(styleProfiles).omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Select types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -231,6 +291,8 @@ export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type LoyaltyTransaction = typeof loyaltyTransactions.$inferSelect;
 export type InsertLoyaltyTransaction = z.infer<typeof insertLoyaltyTransactionSchema>;
+export type StyleProfile = typeof styleProfiles.$inferSelect;
+export type InsertStyleProfile = z.infer<typeof insertStyleProfileSchema>;
 
 // Cart schema for validation
 export const cartItemSchema = z.object({

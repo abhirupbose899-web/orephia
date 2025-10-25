@@ -208,7 +208,7 @@ export default function HomePage() {
                       <span className="text-foreground">Trending looks curated for you</span>
                     </li>
                   </ul>
-                  <Link href="/shop">
+                  <Link href="/style-journey">
                     <Button size="lg" className="w-full md:w-auto" data-testid="button-start-styling">
                       <Sparkles className="mr-2 h-5 w-5" />
                       Start Your Style Journey
