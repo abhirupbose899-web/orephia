@@ -14,7 +14,7 @@ interface CurrencyContextType {
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
-  const [currency, setCurrencyState] = useState<string>("INR");
+  const [currency, setCurrencyState] = useState<string>("USD");
 
   // Fetch exchange rates
   const { data: exchangeRates, isLoading } = useQuery({

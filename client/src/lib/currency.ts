@@ -183,9 +183,10 @@ export function formatPrice(amount: number, currency: string): string {
 
 /**
  * Get currency for a country
+ * Returns USD for countries not in the supported list
  */
 export function getCurrencyForCountry(country: string): string {
-  return COUNTRY_CURRENCY_MAP[country] || "INR";
+  return COUNTRY_CURRENCY_MAP[country] || "USD";
 }
 
 /**

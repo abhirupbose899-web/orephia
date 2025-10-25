@@ -116,7 +116,8 @@ Preferred communication style: Simple, everyday language.
 - Dynamic currency conversion using Open Exchange Rates API with free tier (no API key required)
 - Support for 50+ currencies including USD, EUR, GBP, JPY, AUD, CAD, SGD, AED, and more
 - Country selection during user signup with automatic currency assignment
-- Currency selector in header for easy switching between currencies
+- **Default currency**: Countries with supported currencies (India→INR, UK→GBP, etc.) use their native currency; all other countries default to USD
+- Currency selector in mobile menu for easy switching between currencies
 - Real-time exchange rate fetching with 1-hour caching to minimize API calls
 - All prices stored in database in INR (base currency), converted at display time
 - Consistent price formatting using reusable Price component throughout the application
