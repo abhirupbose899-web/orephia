@@ -43,7 +43,7 @@ export function Header() {
                         onClick={() => setMobileMenuOpen(false)}
                         className={`text-lg py-4 block px-4 rounded-lg text-left w-full font-medium transition-all ${
                           location === link.href
-                            ? "bg-gradient-to-r from-primary/10 to-accent/10 border-2 border-primary/20 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent font-semibold"
+                            ? "bg-gradient-to-r from-primary/10 to-accent/10 border-2 border-primary/20 text-primary font-semibold"
                             : "text-foreground hover-elevate active-elevate-2"
                         }`}
                         data-testid={`link-${link.label.toLowerCase()}-mobile`}
@@ -58,7 +58,7 @@ export function Header() {
                         onClick={() => setMobileMenuOpen(false)}
                         className={`text-lg py-4 block px-4 rounded-lg text-left w-full font-medium transition-all ${
                           location === "/profile"
-                            ? "bg-gradient-to-r from-primary/10 to-accent/10 border-2 border-primary/20 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent font-semibold"
+                            ? "bg-gradient-to-r from-primary/10 to-accent/10 border-2 border-primary/20 text-primary font-semibold"
                             : "text-foreground hover-elevate active-elevate-2"
                         }`}
                         data-testid="link-profile-mobile"
