@@ -66,6 +66,12 @@ Preferred communication style: Simple, everyday language.
 - Express session management with configurable session store
 - Protected API endpoints requiring authentication
 - User serialization/deserialization for session persistence
+- Password reset via email with secure token-based flow:
+  - POST /api/password-reset/request - Initiates password reset by sending email with reset link
+  - POST /api/password-reset/verify - Validates reset token before showing reset form
+  - POST /api/password-reset/reset - Completes password reset with new password
+  - Tokens expire after 1 hour for security
+  - Email delivery via Resend integration with branded HTML templates
 
 **Business Logic Layers**
 - Storage abstraction layer (IStorage interface) for database operations
@@ -91,6 +97,7 @@ Preferred communication style: Simple, everyday language.
 - Loyalty transactions table: Complete audit trail of all points earned and redeemed with type, points amount, description, and optional order ID linkage
 - Categories table: Hierarchical category management with mainCategory and optional subCategory fields for dynamic product categorization
 - Homepage content table: Curated homepage content including hero section (title, subtitle, image) and featured product IDs for admin-controlled homepage customization
+- Password reset tokens table: Secure token storage for password reset flow with expiration timestamps
 - Session store table: Server-side session persistence
 
 **Data Modeling Decisions**
@@ -136,6 +143,12 @@ Preferred communication style: Simple, everyday language.
 - JSON-structured responses for predictable parsing
 - Fallback recommendations for error scenarios
 - Context-aware prompts based on user preferences and product details
+
+**Email Services**
+- Resend integration for transactional email delivery
+- Branded HTML email templates for password reset notifications
+- Secure API key management via Replit Connectors
+- Email sent from configured "from" email address with proper DKIM/SPF verification
 
 **Session Management**
 - Connect-pg-simple for PostgreSQL-backed session storage
