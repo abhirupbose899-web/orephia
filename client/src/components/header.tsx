@@ -24,51 +24,52 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full bg-background border-b">
       <div className="max-w-7xl mx-auto">
-        <div className="h-20 px-4 md:px-8 flex items-center justify-between">
-          {/* Mobile Menu Toggle */}
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild className="lg:hidden">
-              <Button variant="ghost" size="icon" data-testid="button-mobile-menu">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-full sm:max-w-sm">
-              <div className="flex flex-col space-y-4 mt-8">
-                {navLinks.map((link) => (
-                  <Link key={link.href} href={link.href}>
-                    <button
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="text-lg py-4 block text-foreground hover-elevate active-elevate-2 px-4 rounded-lg text-left w-full"
-                      data-testid={`link-${link.label.toLowerCase()}-mobile`}
-                    >
-                      {link.label}
-                    </button>
-                  </Link>
-                ))}
-                {user && (
-                  <Link href="/profile">
-                    <button
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="text-lg py-4 block text-foreground hover-elevate active-elevate-2 px-4 rounded-lg text-left w-full"
-                      data-testid="link-profile-mobile"
-                    >
-                      PROFILE
-                    </button>
-                  </Link>
-                )}
+        <div className="h-20 px-4 md:px-8 flex items-center justify-between gap-4">
+          {/* Left: Mobile Menu + Logo */}
+          <div className="flex items-center gap-2">
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild className="lg:hidden">
+                <Button variant="ghost" size="icon" data-testid="button-mobile-menu">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-full sm:max-w-sm">
+                <div className="flex flex-col space-y-4 mt-8">
+                  {navLinks.map((link) => (
+                    <Link key={link.href} href={link.href}>
+                      <button
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="text-lg py-4 block text-foreground hover-elevate active-elevate-2 px-4 rounded-lg text-left w-full"
+                        data-testid={`link-${link.label.toLowerCase()}-mobile`}
+                      >
+                        {link.label}
+                      </button>
+                    </Link>
+                  ))}
+                  {user && (
+                    <Link href="/profile">
+                      <button
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="text-lg py-4 block text-foreground hover-elevate active-elevate-2 px-4 rounded-lg text-left w-full"
+                        data-testid="link-profile-mobile"
+                      >
+                        PROFILE
+                      </button>
+                    </Link>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <Link href="/">
+              <div className="flex items-center gap-3 cursor-pointer" data-testid="link-home">
+                <img src={logoImage} alt="Orephia" className="h-12 w-12 object-contain" />
+                <span className="font-serif text-2xl font-semibold hidden sm:block">Orephia</span>
               </div>
-            </SheetContent>
-          </Sheet>
+            </Link>
+          </div>
 
-          {/* Logo */}
-          <Link href="/">
-            <div className="flex items-center gap-3 cursor-pointer" data-testid="link-home">
-              <img src={logoImage} alt="Orephia" className="h-12 w-12 object-contain" />
-              <span className="font-serif text-2xl font-semibold hidden sm:block">Orephia</span>
-            </div>
-          </Link>
-
-          {/* Desktop Navigation */}
+          {/* Center: Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
               <Link key={link.href} href={link.href}>
@@ -84,7 +85,7 @@ export function Header() {
             ))}
           </nav>
 
-          {/* Actions */}
+          {/* Right: Actions */}
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" data-testid="button-search">
               <Search className="h-5 w-5" />
