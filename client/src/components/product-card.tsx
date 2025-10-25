@@ -2,6 +2,7 @@ import { Product } from "@shared/schema";
 import { Heart } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Price } from "@/components/price";
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -100,12 +101,9 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.designer && (
             <p className="text-sm text-muted-foreground">{product.designer}</p>
           )}
-          <p
-            className="text-base font-medium"
-            data-testid={`text-product-price-${product.id}`}
-          >
-            ${price.toFixed(2)}
-          </p>
+          <div data-testid={`text-product-price-${product.id}`}>
+            <Price amount={price} className="text-base" />
+          </div>
         </div>
       </div>
     </Link>

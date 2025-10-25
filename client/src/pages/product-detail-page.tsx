@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Heart, ShoppingBag, Minus, Plus, Sparkles } from "lucide-react";
+import { Price } from "@/components/price";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -154,9 +155,9 @@ export default function ProductDetailPage() {
             <h1 className="font-serif text-4xl font-semibold" data-testid="text-product-title">
               {product.title}
             </h1>
-            <p className="text-3xl font-medium" data-testid="text-product-price">
-              ${price.toFixed(2)}
-            </p>
+            <div data-testid="text-product-price">
+              <Price amount={price} className="text-3xl" />
+            </div>
 
             <p className="text-muted-foreground leading-relaxed">{product.description}</p>
 

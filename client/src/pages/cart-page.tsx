@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Price } from "@/components/price";
 import { Minus, Plus, X, Tag, Loader2 } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
@@ -204,9 +205,9 @@ export default function CartPage() {
                             <Plus className="h-3 w-3" />
                           </Button>
                         </div>
-                        <p className="font-medium" data-testid={`text-item-total-${idx}`}>
-                          ${(price * item.quantity).toFixed(2)}
-                        </p>
+                        <div className="font-medium" data-testid={`text-item-total-${idx}`}>
+                          <Price amount={price * item.quantity} />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -262,29 +263,29 @@ export default function CartPage() {
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span data-testid="text-subtotal">${subtotal.toFixed(2)}</span>
+                  <span data-testid="text-subtotal"><Price amount={subtotal} /></span>
                 </div>
                 {appliedCoupon && (
                   <div className="flex justify-between text-sm text-green-600">
                     <span>Discount ({appliedCoupon.code})</span>
-                    <span data-testid="text-discount">-${discount.toFixed(2)}</span>
+                    <span data-testid="text-discount">-<Price amount={discount} /></span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Shipping</span>
                   <span data-testid="text-shipping">
-                    {shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}
+                    {shipping === 0 ? "Free" : <Price amount={shipping} />}
                   </span>
                 </div>
                 {subtotal < 100 && (
                   <p className="text-xs text-muted-foreground">
-                    Free shipping on orders over $100
+                    Free shipping on orders over <Price amount={100} />
                   </p>
                 )}
                 <div className="border-t pt-4">
                   <div className="flex justify-between font-semibold text-lg">
                     <span>Total</span>
-                    <span data-testid="text-total">${total.toFixed(2)}</span>
+                    <span data-testid="text-total"><Price amount={total} /></span>
                   </div>
                 </div>
               </div>
