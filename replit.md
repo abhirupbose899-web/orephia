@@ -2,9 +2,11 @@
 
 ## Overview
 
-Orephia is a luxury women's fashion and accessories e-commerce platform that combines sophisticated design with AI-powered styling recommendations. The application provides a premium shopping experience with features including product browsing, wishlist management, secure checkout via Razorpay, and personalized AI styling assistance powered by OpenAI's GPT-5 model.
+Orephia is a luxury women's fashion and accessories e-commerce platform that combines sophisticated design with AI-powered styling recommendations. The application provides a premium shopping experience with features including product browsing, wishlist management, secure checkout via Razorpay, loyalty points rewards program, and personalized AI styling assistance powered by OpenAI's GPT-5 model.
 
 The platform emphasizes editorial elegance inspired by premium fashion retailers like Net-a-Porter and Farfetch, featuring magazine-quality layouts, generous spacing, and a refined aesthetic using Playfair Display for headings and Poppins for body text.
+
+**Loyalty Points Program**: Customers earn 1 loyalty point for every ₹10 spent (calculated on final total after discounts). Points can be redeemed at checkout for discounts (100 points = ₹1 discount). All point transactions are tracked in the database with complete audit trail.
 
 ## User Preferences
 
@@ -49,10 +51,14 @@ Preferred communication style: Simple, everyday language.
 - Session-based authentication using Passport.js with local strategy
 
 **API Design**
-- RESTful API endpoints organized by resource (products, orders, wishlist, addresses, coupons)
+- RESTful API endpoints organized by resource (products, orders, wishlist, addresses, coupons, loyalty points)
 - Consistent error handling with appropriate HTTP status codes
 - Request logging middleware for debugging and monitoring
 - CORS and security middleware for production deployment
+- Loyalty points API endpoints:
+  - GET /api/loyalty/balance - Fetch user's current points balance
+  - GET /api/loyalty/transactions - Retrieve complete transaction history
+  - POST /api/loyalty/redeem - Redeem points (used internally during order creation)
 
 **Authentication & Authorization**
 - Passport.js with LocalStrategy for username/password authentication
@@ -76,12 +82,13 @@ Preferred communication style: Simple, everyday language.
 - Connection pooling for efficient database resource usage
 
 **Schema Design**
-- Users table: Authentication and profile information with country and preferred currency fields for multi-currency support
+- Users table: Authentication and profile information with country and preferred currency fields for multi-currency support, loyaltyPoints balance field
 - Products table: Complete product catalog with JSON fields for arrays (images, sizes, colors, tags), hierarchical categorization with mainCategory and subCategory fields, newArrival boolean for featured products
 - Wishlist items table: Many-to-many relationship between users and products
-- Orders table: Transaction records with JSON fields for order items and shipping details, includes discount and couponCode fields
+- Orders table: Transaction records with JSON fields for order items and shipping details, includes discount and couponCode fields, pointsEarned and pointsRedeemed for loyalty program tracking
 - Addresses table: User shipping/billing addresses
 - Coupons table: Discount codes with validation rules (expiration, usage limits, minimum purchase), tracks usage count
+- Loyalty transactions table: Complete audit trail of all points earned and redeemed with type, points amount, description, and optional order ID linkage
 - Categories table: Hierarchical category management with mainCategory and optional subCategory fields for dynamic product categorization
 - Homepage content table: Curated homepage content including hero section (title, subtitle, image) and featured product IDs for admin-controlled homepage customization
 - Session store table: Server-side session persistence

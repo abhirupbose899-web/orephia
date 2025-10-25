@@ -114,6 +114,7 @@ export default function CheckoutPage() {
         total: total.toFixed(2),
         status: paymentDetails ? "confirmed" : "pending",
         couponCode: appliedCoupon?.code || null,
+        pointsRedeemed: pointsApplied,
       };
 
       if (paymentDetails) {
@@ -125,18 +126,10 @@ export default function CheckoutPage() {
       return await res.json();
     },
     onSuccess: async () => {
-      // Redeem points if applied
+      // Invalidate loyalty cache if points were redeemed
       if (pointsApplied > 0) {
-        try {
-          await apiRequest("POST", "/api/loyalty/redeem", {
-            points: pointsApplied,
-          });
-          // Invalidate loyalty balance cache
-          queryClient.invalidateQueries({ queryKey: ["/api/loyalty/balance"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/loyalty/transactions"] });
-        } catch (error) {
-          console.error("Failed to redeem loyalty points:", error);
-        }
+        queryClient.invalidateQueries({ queryKey: ["/api/loyalty/balance"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/loyalty/transactions"] });
       }
       
       clearCart();
@@ -187,6 +180,7 @@ export default function CheckoutPage() {
         items,
         addressId: selectedAddressId,
         couponCode: appliedCoupon?.code || null,
+        pointsRedeemed: pointsApplied,
       });
 
       const data = await res.json();

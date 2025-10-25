@@ -164,7 +164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const { items, shippingAddress, status, paymentId, razorpayOrderId, couponCode } = req.body;
+      const { items, shippingAddress, status, paymentId, razorpayOrderId, couponCode, pointsRedeemed } = req.body;
 
       let calculatedSubtotal = 0;
       const verifiedItems = [];
@@ -216,9 +216,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Handle loyalty points redemption
+      let pointsDiscountINR = 0;
+      let pointsDiscountUSD = 0;
+      let actualPointsRedeemed = 0;
+      if (pointsRedeemed && pointsRedeemed > 0) {
+        // Verify user has enough points
+        const userPoints = await storage.getUserLoyaltyPoints(req.user!.id);
+        if (pointsRedeemed > userPoints) {
+          return res.status(400).json({ message: "Insufficient loyalty points" });
+        }
+        
+        // Calculate discount from points (100 points = 1 INR)
+        pointsDiscountINR = pointsRedeemed / 100;
+        // Convert INR discount to USD (prices are in USD)
+        const USD_TO_INR = 83;
+        pointsDiscountUSD = pointsDiscountINR / USD_TO_INR;
+        actualPointsRedeemed = pointsRedeemed;
+        
+        // Ensure total doesn't go negative
+        const maxDiscountUSD = calculatedSubtotal - discount;
+        if (pointsDiscountUSD > maxDiscountUSD) {
+          pointsDiscountUSD = maxDiscountUSD;
+          pointsDiscountINR = maxDiscountUSD * USD_TO_INR;
+          actualPointsRedeemed = Math.floor(pointsDiscountINR * 100);
+        }
+      }
+
       const shipping = calculatedSubtotal > 100 ? 0 : 10;
-      const tax = (calculatedSubtotal - discount) * 0.08;
-      const total = calculatedSubtotal - discount + shipping + tax;
+      const tax = (calculatedSubtotal - discount - pointsDiscountUSD) * 0.08;
+      const total = calculatedSubtotal - discount - pointsDiscountUSD + shipping + tax;
+
+      // Calculate loyalty points to earn (1 point per 10 INR spent on final total)
+      // Convert total to INR for points calculation
+      const USD_TO_INR = 83;
+      const totalINR = total * USD_TO_INR;
+      const pointsToEarn = Math.floor(totalINR / 10);
 
       const orderData = {
         userId: req.user!.id,
@@ -234,16 +267,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
         orderStatus: "processing",
         razorpayOrderId: razorpayOrderId || null,
         razorpayPaymentId: paymentId || null,
+        pointsRedeemed: actualPointsRedeemed,
+        pointsEarned: pointsToEarn,
       };
       
-      // Calculate loyalty points to earn (1 point per 10 INR spent)
-      const pointsToEarn = Math.floor(total / 10);
+      // Validate order data BEFORE redeeming points
+      const validatedData = insertOrderSchema.parse(orderData);
+      
+      // Now redeem points and create order atomically
+      let order;
+      try {
+        // Redeem loyalty points if applied
+        if (actualPointsRedeemed > 0) {
+          const redeemed = await storage.redeemLoyaltyPoints(
+            req.user!.id,
+            actualPointsRedeemed,
+            `Redeemed for order`,
+            null
+          );
+          if (!redeemed) {
+            return res.status(400).json({ message: "Failed to redeem loyalty points" });
+          }
+        }
 
-      const validatedData = insertOrderSchema.parse({
-        ...orderData,
-        pointsEarned: pointsToEarn,
-      });
-      const order = await storage.createOrder(validatedData);
+        // Create the order
+        order = await storage.createOrder(validatedData);
+
+        // Update loyalty transaction with actual order ID
+        if (actualPointsRedeemed > 0) {
+          await db.execute(sql`
+            UPDATE loyalty_transactions 
+            SET order_id = ${order.id}, description = ${`Redeemed for order #${order.id}`}
+            WHERE user_id = ${req.user!.id} 
+            AND type = 'redeemed' 
+            AND points = ${actualPointsRedeemed}
+            AND order_id IS NULL
+            ORDER BY created_at DESC
+            LIMIT 1
+          `);
+        }
+      } catch (error) {
+        // If order creation failed after redeeming points, refund them
+        if (actualPointsRedeemed > 0) {
+          try {
+            await storage.addLoyaltyPoints(
+              req.user!.id,
+              actualPointsRedeemed,
+              "Refund - order creation failed",
+              null
+            );
+            // Delete the failed redemption transaction
+            await db.execute(sql`
+              DELETE FROM loyalty_transactions 
+              WHERE user_id = ${req.user!.id} 
+              AND type = 'redeemed' 
+              AND points = ${actualPointsRedeemed}
+              AND order_id IS NULL
+              ORDER BY created_at DESC
+              LIMIT 1
+            `);
+          } catch (refundError) {
+            console.error("Error refunding loyalty points:", refundError);
+          }
+        }
+        throw error;
+      }
 
       if (validCoupon) {
         try {
@@ -321,7 +409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const { items, addressId, couponCode } = req.body;
+      const { items, addressId, couponCode, pointsRedeemed } = req.body;
       
       if (!items || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({ message: "Invalid cart items" });
@@ -369,9 +457,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Handle loyalty points redemption
+      let pointsDiscountINR = 0;
+      let pointsDiscountUSD = 0;
+      if (pointsRedeemed && pointsRedeemed > 0) {
+        // Verify user has enough points
+        const userPoints = await storage.getUserLoyaltyPoints(req.user!.id);
+        if (pointsRedeemed > userPoints) {
+          return res.status(400).json({ message: "Insufficient loyalty points" });
+        }
+        
+        // Calculate discount from points (100 points = 1 INR)
+        pointsDiscountINR = pointsRedeemed / 100;
+        // Convert INR discount to USD (prices are in USD)
+        const USD_TO_INR = 83;
+        pointsDiscountUSD = pointsDiscountINR / USD_TO_INR;
+        
+        // Ensure total doesn't go negative
+        const maxDiscountUSD = calculatedSubtotal - discount;
+        if (pointsDiscountUSD > maxDiscountUSD) {
+          pointsDiscountUSD = maxDiscountUSD;
+          pointsDiscountINR = maxDiscountUSD * USD_TO_INR;
+        }
+      }
+
       const shipping = calculatedSubtotal > 100 ? 0 : 10;
-      const tax = (calculatedSubtotal - discount) * 0.08;
-      const totalUSD = calculatedSubtotal - discount + shipping + tax;
+      const tax = (calculatedSubtotal - discount - pointsDiscountUSD) * 0.08;
+      const totalUSD = calculatedSubtotal - discount - pointsDiscountUSD + shipping + tax;
       
       const USD_TO_INR = 83;
       const totalINR = Math.round(totalUSD * USD_TO_INR * 100);
@@ -384,6 +496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: req.user!.id,
           itemCount: items.length,
           couponCode: couponCode || "none",
+          pointsRedeemed: pointsRedeemed || 0,
         }
       };
 
@@ -396,6 +509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         calculatedTotalUSD: totalUSD.toFixed(2),
         calculatedTotalINR: (totalINR / 100).toFixed(2),
         discount: discount.toFixed(2),
+        pointsDiscount: pointsDiscountUSD.toFixed(2),
         couponApplied: couponCode || null,
       });
     } catch (error: any) {
