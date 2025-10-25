@@ -54,7 +54,7 @@ export default function HomePage() {
           <h1 className="font-serif text-6xl md:text-7xl lg:text-8xl font-bold mb-8 leading-tight whitespace-pre-line bg-gradient-to-br from-white via-[#F5E6E8] to-[#E8C4C8] bg-clip-text drop-shadow-2xl [text-shadow:_0_2px_20px_rgba(255,255,255,0.5)] text-[#8e4e4f]" data-testid="text-hero-title">
             {heroTitle}
           </h1>
-          <p className="text-xl md:text-2xl text-white/95 mb-12 max-w-3xl mx-auto drop-shadow-lg font-light">
+          <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto drop-shadow-lg font-light text-[#541a17]">
             {heroSubtitle}
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
