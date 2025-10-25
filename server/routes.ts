@@ -236,7 +236,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         razorpayPaymentId: paymentId || null,
       };
       
-      const validatedData = insertOrderSchema.parse(orderData);
+      // Calculate loyalty points to earn (1 point per 10 INR spent)
+      const pointsToEarn = Math.floor(total / 10);
+
+      const validatedData = insertOrderSchema.parse({
+        ...orderData,
+        pointsEarned: pointsToEarn,
+      });
       const order = await storage.createOrder(validatedData);
 
       if (validCoupon) {
@@ -246,6 +252,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .where(eq(coupons.id, validCoupon.id));
         } catch (couponError) {
           console.error("Error updating coupon usage:", couponError);
+        }
+      }
+
+      // Award loyalty points if payment is successful
+      if (status === "paid") {
+        try {
+          await storage.addLoyaltyPoints(
+            req.user!.id,
+            pointsToEarn,
+            `Earned from order #${order.id}`,
+            order.id
+          );
+        } catch (pointsError) {
+          console.error("Error awarding loyalty points:", pointsError);
         }
       }
 
@@ -705,6 +725,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(content);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Loyalty Points routes
+  app.get("/api/loyalty/balance", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const points = await storage.getUserLoyaltyPoints(req.user!.id);
+      res.json({ points });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/loyalty/transactions", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const transactions = await storage.getUserLoyaltyTransactions(req.user!.id);
+      res.json(transactions);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/loyalty/redeem", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const { points } = req.body;
+      
+      if (!points || points <= 0) {
+        return res.status(400).json({ message: "Invalid points amount" });
+      }
+
+      // Points redemption rate: 100 points = 1 INR discount
+      const success = await storage.redeemLoyaltyPoints(
+        req.user!.id,
+        points,
+        `Redeemed ${points} points for discount`
+      );
+
+      if (!success) {
+        return res.status(400).json({ message: "Insufficient loyalty points" });
+      }
+
+      res.json({ message: "Points redeemed successfully", pointsRedeemed: points });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
     }
   });
 
