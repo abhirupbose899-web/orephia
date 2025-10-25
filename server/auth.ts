@@ -136,7 +136,13 @@ export function setupAuth(app: Express) {
       });
 
       // Send email
-      await sendPasswordResetEmail(user.email, resetToken, user.username);
+      try {
+        await sendPasswordResetEmail(user.email, resetToken, user.username);
+        console.log(`✅ Password reset email sent to ${user.email}`);
+      } catch (emailError) {
+        console.error("❌ Failed to send password reset email:", emailError);
+        // Still return success to user for security
+      }
 
       res.status(200).json({ message: "If an account exists, a password reset email has been sent." });
     } catch (error) {
