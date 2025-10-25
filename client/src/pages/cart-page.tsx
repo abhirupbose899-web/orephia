@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useCart } from "@/hooks/use-cart";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Product } from "@shared/schema";
@@ -12,13 +12,50 @@ import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+function CartSkeleton() {
+  return (
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
+        <div className="h-10 w-48 bg-muted rounded-lg animate-pulse mb-12" />
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i} className="p-4">
+                <div className="flex gap-4">
+                  <div className="w-24 h-24 bg-muted rounded-lg animate-pulse" />
+                  <div className="flex-1 space-y-3">
+                    <div className="h-5 bg-muted rounded w-2/3 animate-pulse" />
+                    <div className="h-4 bg-muted rounded w-1/3 animate-pulse" />
+                    <div className="h-4 bg-muted rounded w-1/4 animate-pulse" />
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+          <div className="lg:col-span-1">
+            <Card className="p-6">
+              <div className="h-6 w-32 bg-muted rounded animate-pulse mb-6" />
+              <div className="space-y-4">
+                <div className="h-10 bg-muted rounded animate-pulse" />
+                <div className="h-4 bg-muted rounded animate-pulse" />
+                <div className="h-4 bg-muted rounded animate-pulse" />
+                <div className="h-12 bg-muted rounded animate-pulse mt-6" />
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart } = useCart();
   const { toast } = useToast();
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   
-  const { data: products = [] } = useQuery<Product[]>({
+  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
 
@@ -60,22 +97,30 @@ export default function CartPage() {
     },
   });
 
-  const cartItemsWithDetails = cart.map((item) => {
-    const product = products.find((p) => p.id === item.productId);
-    return { ...item, product };
-  });
+  const cartItemsWithDetails = useMemo(() => {
+    if (!products.length) return [];
+    const productMap = new Map(products.map(p => [p.id, p]));
+    return cart.map((item) => ({
+      ...item,
+      product: productMap.get(item.productId)
+    }));
+  }, [cart, products]);
 
-  const subtotal = cartItemsWithDetails.reduce((sum, item) => {
-    if (!item.product) return sum;
-    const price = typeof item.product.price === "string" 
-      ? parseFloat(item.product.price) 
-      : item.product.price;
-    return sum + price * item.quantity;
-  }, 0);
+  const { subtotal, discount, shipping, total } = useMemo(() => {
+    const sub = cartItemsWithDetails.reduce((sum, item) => {
+      if (!item.product) return sum;
+      const price = typeof item.product.price === "string" 
+        ? parseFloat(item.product.price) 
+        : item.product.price;
+      return sum + price * item.quantity;
+    }, 0);
 
-  const discount = appliedCoupon ? parseFloat(appliedCoupon.discountAmount) : 0;
-  const shipping = subtotal > 100 ? 0 : 10;
-  const total = subtotal - discount + shipping;
+    const disc = appliedCoupon ? parseFloat(appliedCoupon.discountAmount) : 0;
+    const ship = sub > 100 ? 0 : 10;
+    const tot = sub - disc + ship;
+
+    return { subtotal: sub, discount: disc, shipping: ship, total: tot };
+  }, [cartItemsWithDetails, appliedCoupon]);
 
   const handleApplyCoupon = () => {
     if (!couponCode.trim()) {
@@ -114,6 +159,10 @@ export default function CartPage() {
       }
     }
   }, []);
+
+  if (productsLoading && cart.length > 0) {
+    return <CartSkeleton />;
+  }
 
   if (cart.length === 0) {
     return (

@@ -1,9 +1,36 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Product } from "@shared/schema";
 import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Link } from "wouter";
 import { Heart } from "lucide-react";
+
+function WishlistSkeleton() {
+  return (
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
+        <div className="mb-12">
+          <div className="h-10 w-64 bg-muted rounded-lg animate-pulse mb-2" />
+          <div className="h-5 w-32 bg-muted rounded animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+          {[...Array(8)].map((_, i) => (
+            <Card key={i} className="overflow-hidden">
+              <div className="aspect-[3/4] bg-gradient-to-br from-muted/50 to-muted animate-pulse" />
+              <div className="p-4 space-y-3">
+                <div className="h-4 bg-muted rounded animate-pulse" />
+                <div className="h-4 bg-muted rounded w-2/3 animate-pulse" />
+                <div className="h-8 bg-muted rounded animate-pulse" />
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function WishlistPage() {
   const { data: wishlist = [], isLoading: wishlistLoading } = useQuery<{ productId: string }[]>({
@@ -14,18 +41,16 @@ export default function WishlistPage() {
     queryKey: ["/api/products"],
   });
 
-  const wishlistProducts = products.filter((product) =>
-    wishlist.some((item) => item.productId === product.id)
-  );
+  const wishlistProducts = useMemo(() => {
+    if (!wishlist.length || !products.length) return [];
+    const wishlistIds = new Set(wishlist.map(item => item.productId));
+    return products.filter(product => wishlistIds.has(product.id));
+  }, [wishlist, products]);
 
   const isLoading = wishlistLoading || productsLoading;
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+    return <WishlistSkeleton />;
   }
 
   if (wishlistProducts.length === 0) {
