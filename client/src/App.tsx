@@ -32,6 +32,8 @@ import AdminProductsPage from "@/pages/admin/products-page";
 import AdminCategoriesPage from "@/pages/admin/categories-page";
 import AdminOrdersPage from "@/pages/admin/orders-page";
 import AdminCouponsPage from "@/pages/admin/coupons-page";
+import ForgotPasswordPage from "@/pages/forgot-password-page";
+import ResetPasswordPage from "@/pages/reset-password-page";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -39,6 +41,8 @@ function Router() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/forgot-password" component={ForgotPasswordPage} />
+      <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/shop" component={ShopPage} />
       <Route path="/product/:id" component={ProductDetailPage} />
       <Route path="/cart" component={CartPage} />
