@@ -11,7 +11,7 @@ export async function sendPasswordResetEmail(
   const resetUrl = `http://localhost:5000/reset-password?token=${resetToken}`;
   
   const result = await resend.emails.send({
-    from: 'onboarding@resend.dev',
+    from: 'support@orephia.com',
     to: toEmail,
     subject: 'Reset Your Orephia Password',
     html: `
