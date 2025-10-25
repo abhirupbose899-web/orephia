@@ -11,9 +11,10 @@ import { useToast } from "@/hooks/use-toast";
 
 interface ProductCardProps {
   product: Product;
+  hidePrice?: boolean;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, hidePrice = false }: ProductCardProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -101,9 +102,11 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.designer && (
             <p className="text-sm text-muted-foreground">{product.designer}</p>
           )}
-          <div data-testid={`text-product-price-${product.id}`}>
-            <Price amount={price} className="text-base" />
-          </div>
+          {!hidePrice && (
+            <div data-testid={`text-product-price-${product.id}`}>
+              <Price amount={price} className="text-base" />
+            </div>
+          )}
         </div>
       </div>
     </Link>
