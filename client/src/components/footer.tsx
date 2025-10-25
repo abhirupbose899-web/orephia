@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { Mail, MapPin, Phone } from "lucide-react";
+import logoImage from "@assets/orephia logo_1761335884349.png";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -10,7 +11,11 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <h3 className="font-serif text-2xl font-bold text-primary">Orephia</h3>
+            <Link href="/">
+              <div className="cursor-pointer">
+                <img src={logoImage} alt="Orephia" className="h-24 w-auto object-contain" />
+              </div>
+            </Link>
             <p className="text-sm text-muted-foreground">
               Luxury women's fashion curated with elegance and sophistication
             </p>
