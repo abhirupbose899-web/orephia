@@ -22,23 +22,23 @@ export function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link href="/shop">
-                  <a className="text-sm text-muted-foreground hover:text-primary transition-colors" data-testid="link-footer-shop">
+                  <span className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer" data-testid="link-footer-shop">
                     Shop
-                  </a>
+                  </span>
                 </Link>
               </li>
               <li>
                 <Link href="/collections">
-                  <a className="text-sm text-muted-foreground hover:text-primary transition-colors" data-testid="link-footer-collections">
+                  <span className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer" data-testid="link-footer-collections">
                     Collections
-                  </a>
+                  </span>
                 </Link>
               </li>
               <li>
                 <Link href="/style-journey">
-                  <a className="text-sm text-muted-foreground hover:text-primary transition-colors" data-testid="link-footer-style">
+                  <span className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer" data-testid="link-footer-style">
                     Style Journey
-                  </a>
+                  </span>
                 </Link>
               </li>
             </ul>
@@ -50,30 +50,30 @@ export function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link href="/about">
-                  <a className="text-sm text-muted-foreground hover:text-primary transition-colors" data-testid="link-footer-about">
+                  <span className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer" data-testid="link-footer-about">
                     About Us
-                  </a>
+                  </span>
                 </Link>
               </li>
               <li>
                 <Link href="/contact">
-                  <a className="text-sm text-muted-foreground hover:text-primary transition-colors" data-testid="link-footer-contact">
+                  <span className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer" data-testid="link-footer-contact">
                     Contact Us
-                  </a>
+                  </span>
                 </Link>
               </li>
               <li>
                 <Link href="/privacy">
-                  <a className="text-sm text-muted-foreground hover:text-primary transition-colors" data-testid="link-footer-privacy">
+                  <span className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer" data-testid="link-footer-privacy">
                     Privacy Policy
-                  </a>
+                  </span>
                 </Link>
               </li>
               <li>
                 <Link href="/disclaimer">
-                  <a className="text-sm text-muted-foreground hover:text-primary transition-colors" data-testid="link-footer-disclaimer">
+                  <span className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer" data-testid="link-footer-disclaimer">
                     Disclaimer
-                  </a>
+                  </span>
                 </Link>
               </li>
             </ul>
@@ -107,14 +107,14 @@ export function Footer() {
             </p>
             <div className="flex gap-6">
               <Link href="/privacy">
-                <a className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <span className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer">
                   Privacy
-                </a>
+                </span>
               </Link>
               <Link href="/disclaimer">
-                <a className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <span className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer">
                   Disclaimer
-                </a>
+                </span>
               </Link>
             </div>
           </div>

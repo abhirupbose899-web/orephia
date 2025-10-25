@@ -132,7 +132,7 @@ export default function StyleJourneyPage() {
     }
   };
 
-  const recommendedProducts = results
+  const recommendedProducts = results?.aiInsights?.catalogPicks
     ? products.filter(p => results.aiInsights.catalogPicks?.some(pick => pick.productId === p.id))
     : [];
 
