@@ -251,11 +251,11 @@ export default function ShopPage() {
                 Filters
               </Button>
             </SheetTrigger>
-            <SheetContent>
+            <SheetContent className="overflow-y-auto">
               <SheetHeader>
                 <SheetTitle>Filters</SheetTitle>
               </SheetHeader>
-              <div className="mt-6">
+              <div className="mt-6 pb-6">
                 <FilterPanel />
               </div>
             </SheetContent>
