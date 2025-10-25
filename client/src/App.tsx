@@ -9,6 +9,7 @@ import { CurrencyProvider } from "@/hooks/use-currency";
 import { ProtectedRoute } from "./lib/protected-route";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { ScrollToTop } from "@/components/scroll-to-top";
 import { AdminLayout } from "@/components/admin-layout";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
@@ -105,6 +106,7 @@ function App() {
         <CurrencyProvider>
           <CartProvider>
             <TooltipProvider>
+              <ScrollToTop />
               <div className="min-h-screen flex flex-col">
                 <Header />
                 <main className="flex-1">
