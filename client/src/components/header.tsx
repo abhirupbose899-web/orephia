@@ -39,9 +39,6 @@ export function Header() {
                 <div className="flex flex-col space-y-4 mt-8">
                   {/* Currency Selector */}
                   <div className="px-4 pb-4 border-b border-border">
-                    <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                      Select Currency
-                    </label>
                     <CurrencySelector />
                   </div>
                   
