@@ -50,7 +50,7 @@ export async function sendPasswordResetEmail(
   
   const resetUrl = `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/reset-password?token=${resetToken}`;
   
-  await client.emails.send({
+  const result = await client.emails.send({
     from: fromEmail,
     to: toEmail,
     subject: 'Reset Your Orephia Password',
@@ -133,4 +133,10 @@ export async function sendPasswordResetEmail(
       </html>
     `,
   });
+
+  if (result.error) {
+    throw new Error(`Resend API Error: ${result.error.message}`);
+  }
+
+  console.log(`Email sent successfully - ID: ${result.data?.id}`);
 }

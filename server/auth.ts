@@ -139,8 +139,17 @@ export function setupAuth(app: Express) {
       try {
         await sendPasswordResetEmail(user.email, resetToken, user.username);
         console.log(`✅ Password reset email sent to ${user.email}`);
-      } catch (emailError) {
-        console.error("❌ Failed to send password reset email:", emailError);
+      } catch (emailError: any) {
+        console.error("❌ Failed to send password reset email:", emailError?.message || emailError);
+        
+        // Log specific Resend errors
+        if (emailError?.message?.includes('Resend')) {
+          console.error("⚠️  Resend Configuration Issue:");
+          console.error("   1. Check if your Resend account is verified");
+          console.error("   2. Verify the 'from' email address in Resend dashboard");
+          console.error("   3. Check if you're in sandbox mode (can only send to verified emails)");
+        }
+        
         // Still return success to user for security
       }
 
