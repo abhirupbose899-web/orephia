@@ -150,6 +150,14 @@ export default function ProfilePage() {
                     </p>
                   </div>
                 </div>
+                <Button 
+                  onClick={() => setLocation("/loyalty")} 
+                  variant="outline" 
+                  className="w-full mt-4"
+                  data-testid="button-view-loyalty"
+                >
+                  View Full Rewards Program
+                </Button>
               </CardContent>
             </Card>
 

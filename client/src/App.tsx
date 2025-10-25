@@ -24,6 +24,7 @@ import AboutPage from "@/pages/about-page";
 import ContactPage from "@/pages/contact-page";
 import PrivacyPage from "@/pages/privacy-page";
 import DisclaimerPage from "@/pages/disclaimer-page";
+import LoyaltyPage from "@/pages/loyalty-page";
 import AdminDashboardPage from "@/pages/admin/dashboard-page";
 import AdminHomepagePage from "@/pages/admin/homepage-page";
 import AdminProductsPage from "@/pages/admin/products-page";
@@ -47,6 +48,7 @@ function Router() {
       <Route path="/contact" component={ContactPage} />
       <Route path="/privacy" component={PrivacyPage} />
       <Route path="/disclaimer" component={DisclaimerPage} />
+      <ProtectedRoute path="/loyalty" component={LoyaltyPage} />
       <ProtectedRoute path="/checkout" component={CheckoutPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
       <Route path="/admin">

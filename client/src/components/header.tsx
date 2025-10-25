@@ -20,6 +20,7 @@ export function Header() {
     { label: "SHOP", href: "/shop" },
     { label: "COLLECTIONS", href: "/collections" },
     { label: "WISHLIST", href: "/wishlist" },
+    { label: "REWARDS", href: "/loyalty" },
   ];
 
   return (
