@@ -1,12 +1,12 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { Order } from "@shared/schema";
+import { Order, LoyaltyTransaction } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
-import { Package, Heart, MapPin, LogOut } from "lucide-react";
+import { Package, Heart, MapPin, LogOut, Gift, TrendingUp, TrendingDown } from "lucide-react";
 
 export default function ProfilePage() {
   const { user, logoutMutation } = useAuth();
@@ -18,6 +18,14 @@ export default function ProfilePage() {
 
   const { data: addresses = [] } = useQuery<any[]>({
     queryKey: ["/api/addresses"],
+  });
+
+  const { data: loyaltyBalance } = useQuery<{ points: number }>({
+    queryKey: ["/api/loyalty/balance"],
+  });
+
+  const { data: loyaltyTransactions = [] } = useQuery<LoyaltyTransaction[]>({
+    queryKey: ["/api/loyalty/transactions"],
   });
 
   const handleLogout = () => {
@@ -40,6 +48,10 @@ export default function ProfilePage() {
             <TabsTrigger value="orders" data-testid="tab-orders">
               <Package className="h-4 w-4 mr-2" />
               Orders
+            </TabsTrigger>
+            <TabsTrigger value="rewards" data-testid="tab-rewards">
+              <Gift className="h-4 w-4 mr-2" />
+              Rewards
             </TabsTrigger>
             <TabsTrigger value="wishlist" data-testid="tab-wishlist-link">
               <Heart className="h-4 w-4 mr-2" />
@@ -107,6 +119,97 @@ export default function ProfilePage() {
                 </Card>
               ))
             )}
+          </TabsContent>
+
+          <TabsContent value="rewards" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Gift className="h-5 w-5 text-primary" />
+                  Your Loyalty Points
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between p-6 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Available Points</p>
+                    <p className="text-4xl font-bold text-primary" data-testid="text-loyalty-balance">
+                      {loyaltyBalance?.points || 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Earn 1 point for every ₹10 spent
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground mb-1">Points Value</p>
+                    <p className="text-2xl font-semibold">
+                      ₹{((loyaltyBalance?.points || 0) / 100).toFixed(2)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      100 points = ₹1 discount
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Transactions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loyaltyTransactions.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Gift className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground">No transactions yet</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Start shopping to earn loyalty points
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {loyaltyTransactions.map((transaction) => (
+                      <div
+                        key={transaction.id}
+                        className="flex items-center justify-between py-3 border-b last:border-0"
+                        data-testid={`transaction-${transaction.id}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          {transaction.type === "earned" ? (
+                            <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-full">
+                              <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
+                            </div>
+                          ) : (
+                            <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-full">
+                              <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-medium text-sm">{transaction.description}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(transaction.createdAt || "").toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p
+                            className={`font-semibold ${
+                              transaction.type === "earned"
+                                ? "text-green-600 dark:text-green-400"
+                                : "text-red-600 dark:text-red-400"
+                            }`}
+                          >
+                            {transaction.type === "earned" ? "+" : "-"}
+                            {transaction.points}
+                          </p>
+                          <p className="text-xs text-muted-foreground">points</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="wishlist">
