@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Product } from "@shared/schema";
+import { Product, Category } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -18,6 +18,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +43,22 @@ export default function AdminProductsPage() {
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
+
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ["/api/admin/categories"],
+  });
+
+  // Get unique main categories
+  const mainCategories = useMemo(() => {
+    return Array.from(new Set(categories.map(c => c.mainCategory)));
+  }, [categories]);
+
+  // Get filtered subcategories based on selected main category
+  const getSubCategories = (mainCategory: string) => {
+    return categories
+      .filter(c => c.mainCategory === mainCategory && c.subCategory)
+      .map(c => c.subCategory!);
+  };
 
   const form = useForm({
     defaultValues: {
@@ -338,12 +361,45 @@ export default function AdminProductsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="mainCategory">Main Category</Label>
-                <Input {...form.register("mainCategory")} id="mainCategory" placeholder="e.g., Apparels, Shoes, Bags" data-testid="input-mainCategory" required />
+                <Label htmlFor="mainCategory">Main Category *</Label>
+                <Select 
+                  value={form.watch("mainCategory")} 
+                  onValueChange={(value) => {
+                    form.setValue("mainCategory", value);
+                    // Reset subcategory when main category changes
+                    form.setValue("subCategory", "");
+                  }}
+                >
+                  <SelectTrigger data-testid="select-main-category">
+                    <SelectValue placeholder="Select main category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mainCategories.map((cat) => (
+                      <SelectItem key={cat} value={cat} data-testid={`option-main-${cat}`}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="subCategory">Sub Category</Label>
-                <Input {...form.register("subCategory")} id="subCategory" placeholder="e.g., Dresses, Jackets" data-testid="input-subCategory" />
+                <Select 
+                  value={form.watch("subCategory")} 
+                  onValueChange={(value) => form.setValue("subCategory", value)}
+                  disabled={!form.watch("mainCategory")}
+                >
+                  <SelectTrigger data-testid="select-sub-category">
+                    <SelectValue placeholder="Select subcategory" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getSubCategories(form.watch("mainCategory")).map((subCat) => (
+                      <SelectItem key={subCat} value={subCat} data-testid={`option-sub-${subCat}`}>
+                        {subCat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div>
