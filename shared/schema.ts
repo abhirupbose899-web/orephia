@@ -10,6 +10,8 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   email: text("email").notNull().unique(),
   fullName: text("full_name"),
+  country: text("country"),
+  currency: text("currency").default("INR"),
   role: text("role").notNull().default("customer"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -151,6 +153,8 @@ export const insertUserSchema = createInsertSchema(users, {
   password: true,
   email: true,
   fullName: true,
+  country: true,
+  currency: true,
 });
 
 export const insertProductSchema = createInsertSchema(products).omit({

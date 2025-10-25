@@ -6,6 +6,7 @@ import { useCart } from "@/hooks/use-cart";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import { CurrencySelector } from "@/components/currency-selector";
 import logoImage from "@assets/orephia logo_1761335884349.png";
 
 export function Header() {
@@ -86,6 +87,7 @@ export function Header() {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2">
+            <CurrencySelector />
             <Button variant="ghost" size="icon" data-testid="button-search">
               <Search className="h-5 w-5" />
             </Button>

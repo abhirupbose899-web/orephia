@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/use-auth";
 import { CartProvider } from "@/hooks/use-cart";
+import { CurrencyProvider } from "@/hooks/use-currency";
 import { ProtectedRoute } from "./lib/protected-route";
 import { Header } from "@/components/header";
 import { AdminLayout } from "@/components/admin-layout";
@@ -88,17 +89,19 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <CartProvider>
-          <TooltipProvider>
-            <div className="min-h-screen flex flex-col">
-              <Header />
-              <main className="flex-1">
-                <Router />
-              </main>
-            </div>
-            <Toaster />
-          </TooltipProvider>
-        </CartProvider>
+        <CurrencyProvider>
+          <CartProvider>
+            <TooltipProvider>
+              <div className="min-h-screen flex flex-col">
+                <Header />
+                <main className="flex-1">
+                  <Router />
+                </main>
+              </div>
+              <Toaster />
+            </TooltipProvider>
+          </CartProvider>
+        </CurrencyProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

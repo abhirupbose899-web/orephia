@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { getAvailableCountries, getCurrencyForCountry } from "@/lib/currency";
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
@@ -17,6 +19,8 @@ export default function AuthPage() {
     email: "",
     password: "",
     fullName: "",
+    country: "",
+    currency: "INR",
   });
 
   useEffect(() => {
@@ -153,6 +157,27 @@ export default function AuthPage() {
                         required
                         data-testid="input-register-password"
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="register-country">Country</Label>
+                      <Select
+                        value={registerData.country}
+                        onValueChange={(value) => {
+                          const currency = getCurrencyForCountry(value);
+                          setRegisterData({ ...registerData, country: value, currency });
+                        }}
+                      >
+                        <SelectTrigger id="register-country" data-testid="select-register-country">
+                          <SelectValue placeholder="Select your country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getAvailableCountries().map((country) => (
+                            <SelectItem key={country} value={country}>
+                              {country}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <Button
                       type="submit"
