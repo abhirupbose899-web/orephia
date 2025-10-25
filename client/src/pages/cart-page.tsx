@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Price } from "@/components/price";
-import { Minus, Plus, X, Tag, Loader2 } from "lucide-react";
+import { Minus, Plus, X, Tag, Loader2, ShoppingBag, Sparkles, Gift } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -16,15 +16,15 @@ function CartSkeleton() {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
-        <div className="h-10 w-48 bg-muted rounded-lg animate-pulse mb-12" />
+        <div className="h-10 w-48 bg-gradient-to-r from-primary/20 to-accent/20 rounded-lg animate-pulse mb-12" />
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-4">
             {[...Array(3)].map((_, i) => (
-              <Card key={i} className="p-4">
+              <Card key={i} className="p-4 border-primary/10">
                 <div className="flex gap-4">
-                  <div className="w-24 h-24 bg-muted rounded-lg animate-pulse" />
+                  <div className="w-24 h-24 bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg animate-pulse" />
                   <div className="flex-1 space-y-3">
-                    <div className="h-5 bg-muted rounded w-2/3 animate-pulse" />
+                    <div className="h-5 bg-gradient-to-r from-muted to-primary/10 rounded w-2/3 animate-pulse" />
                     <div className="h-4 bg-muted rounded w-1/3 animate-pulse" />
                     <div className="h-4 bg-muted rounded w-1/4 animate-pulse" />
                   </div>
@@ -33,13 +33,13 @@ function CartSkeleton() {
             ))}
           </div>
           <div className="lg:col-span-1">
-            <Card className="p-6">
-              <div className="h-6 w-32 bg-muted rounded animate-pulse mb-6" />
+            <Card className="p-6 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+              <div className="h-6 w-32 bg-gradient-to-r from-primary/20 to-accent/20 rounded animate-pulse mb-6" />
               <div className="space-y-4">
                 <div className="h-10 bg-muted rounded animate-pulse" />
                 <div className="h-4 bg-muted rounded animate-pulse" />
                 <div className="h-4 bg-muted rounded animate-pulse" />
-                <div className="h-12 bg-muted rounded animate-pulse mt-6" />
+                <div className="h-12 bg-gradient-to-r from-primary/20 to-accent/20 rounded animate-pulse mt-6" />
               </div>
             </Card>
           </div>
@@ -173,14 +173,23 @@ export default function CartPage() {
 
   if (cart.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary/5 via-transparent to-accent/5">
         <div className="text-center max-w-md px-4">
-          <h1 className="font-serif text-3xl font-semibold mb-4">Your cart is empty</h1>
-          <p className="text-muted-foreground mb-8">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 blur-xl"></div>
+            </div>
+            <ShoppingBag className="h-20 w-20 mx-auto relative text-primary" />
+          </div>
+          <h1 className="font-serif text-4xl font-semibold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Your cart is empty</h1>
+          <p className="text-muted-foreground mb-8 text-lg">
             Discover our luxury collections and find pieces that speak to you
           </p>
           <Link href="/shop">
-            <Button size="lg" data-testid="button-shop">Continue Shopping</Button>
+            <Button size="lg" data-testid="button-shop" className="bg-gradient-to-r from-primary to-accent hover:opacity-90">
+              <Sparkles className="h-4 w-4 mr-2" />
+              Continue Shopping
+            </Button>
           </Link>
         </div>
       </div>
@@ -190,7 +199,17 @@ export default function CartPage() {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
-        <h1 className="font-serif text-4xl font-semibold mb-12">Shopping Cart</h1>
+        <div className="flex items-center gap-3 mb-12">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
+            <ShoppingBag className="h-6 w-6 text-primary" />
+          </div>
+          <h1 className="font-serif text-4xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            Shopping Cart
+          </h1>
+          <Badge variant="secondary" className="ml-2 bg-gradient-to-r from-primary/10 to-accent/10 text-primary border-primary/20">
+            {cart.length} {cart.length === 1 ? "item" : "items"}
+          </Badge>
+        </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Cart Items */}
@@ -203,7 +222,7 @@ export default function CartPage() {
               const images = Array.isArray(item.product.images) ? item.product.images : [];
 
               return (
-                <Card key={`${item.productId}-${item.size}-${item.color}-${idx}`} className="p-4">
+                <Card key={`${item.productId}-${item.size}-${item.color}-${idx}`} className="p-4 border-primary/10 hover-elevate transition-all">
                   <div className="flex gap-4">
                     <Link href={`/product/${item.product.id}`}>
                       <img
@@ -275,8 +294,11 @@ export default function CartPage() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <Card className="p-6 sticky top-24">
-              <h2 className="font-semibold text-lg mb-6">Order Summary</h2>
+            <Card className="p-6 sticky top-24 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+              <div className="flex items-center gap-2 mb-6">
+                <Gift className="h-5 w-5 text-primary" />
+                <h2 className="font-semibold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Order Summary</h2>
+              </div>
               
               {/* Coupon Input */}
               <div className="mb-6">
@@ -304,7 +326,7 @@ export default function CartPage() {
                 </div>
                 {appliedCoupon && (
                   <div className="mt-2">
-                    <Badge variant="secondary" className="gap-1">
+                    <Badge variant="secondary" className="gap-1 bg-gradient-to-r from-green-500/10 to-emerald-500/10 text-green-700 dark:text-green-400 border-green-500/20">
                       <Tag className="h-3 w-3" />
                       {appliedCoupon.code}
                       <X
@@ -323,9 +345,12 @@ export default function CartPage() {
                   <span data-testid="text-subtotal"><Price amount={subtotal} /></span>
                 </div>
                 {appliedCoupon && (
-                  <div className="flex justify-between text-sm text-green-600">
-                    <span>Discount ({appliedCoupon.code})</span>
-                    <span data-testid="text-discount">-<Price amount={discount} /></span>
+                  <div className="flex justify-between text-sm">
+                    <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                      <Tag className="h-3 w-3" />
+                      Discount ({appliedCoupon.code})
+                    </span>
+                    <span data-testid="text-discount" className="text-green-600 dark:text-green-400 font-medium">-<Price amount={discount} /></span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
@@ -339,15 +364,16 @@ export default function CartPage() {
                     Free shipping on orders over <Price amount={100} />
                   </p>
                 )}
-                <div className="border-t pt-4">
+                <div className="border-t border-primary/20 pt-4">
                   <div className="flex justify-between font-semibold text-lg">
-                    <span>Total</span>
-                    <span data-testid="text-total"><Price amount={total} /></span>
+                    <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Total</span>
+                    <span data-testid="text-total" className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"><Price amount={total} /></span>
                   </div>
                 </div>
               </div>
               <Link href="/checkout">
-                <Button size="lg" className="w-full" data-testid="button-checkout">
+                <Button size="lg" className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90" data-testid="button-checkout">
+                  <Sparkles className="h-4 w-4 mr-2" />
                   Proceed to Checkout
                 </Button>
               </Link>
