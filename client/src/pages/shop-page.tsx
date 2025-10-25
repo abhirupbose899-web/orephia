@@ -23,15 +23,29 @@ export default function ShopPage() {
   const [selectedSubCategories, setSelectedSubCategories] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedDesigners, setSelectedDesigners] = useState<string[]>([]);
-  const [apparelsExpanded, setApparelsExpanded] = useState(true);
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
+    "Apparels": true,
+    "Shoes": true,
+    "Bags": true,
+    "Accessories": true,
+  });
 
   // Extract unique values for filters
   const mainCategories = Array.from(new Set(products.map((p) => p.mainCategory).filter(Boolean))) as string[];
-  const apparelSubCategories = Array.from(
-    new Set(products.filter((p) => p.mainCategory === "Apparels" && p.subCategory).map((p) => p.subCategory))
-  ) as string[];
+  
+  // Get subcategories for each main category
+  const getSubCategoriesForMain = (mainCat: string) => {
+    return Array.from(
+      new Set(products.filter((p) => p.mainCategory === mainCat && p.subCategory).map((p) => p.subCategory))
+    ) as string[];
+  };
+  
   const designers = Array.from(new Set(products.map((p) => p.designer).filter(Boolean))) as string[];
   const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
+
+  const toggleCategoryExpanded = (category: string) => {
+    setExpandedCategories(prev => ({ ...prev, [category]: !prev[category] }));
+  };
 
   // Filter products
   const filteredProducts = products.filter((product) => {
@@ -98,62 +112,73 @@ export default function ShopPage() {
 
       <div>
         <h3 className="font-semibold mb-4">Category</h3>
-        <div className="space-y-2">
-          {mainCategories.map((mainCat) => (
-            <div key={mainCat}>
-              {mainCat === "Apparels" ? (
-                <Collapsible open={apparelsExpanded} onOpenChange={setApparelsExpanded}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center flex-1">
-                      <Checkbox
-                        id={`main-${mainCat}`}
-                        checked={selectedMainCategories.includes(mainCat)}
-                        onCheckedChange={() => toggleFilter(mainCat, setSelectedMainCategories)}
-                        data-testid={`checkbox-main-category-${mainCat}`}
-                      />
-                      <Label htmlFor={`main-${mainCat}`} className="ml-2 text-sm cursor-pointer">
-                        {mainCat}
-                      </Label>
+        <div className="space-y-3">
+          {mainCategories.map((mainCat) => {
+            const subCategories = getSubCategoriesForMain(mainCat);
+            const hasSubCategories = subCategories.length > 0;
+            const isExpanded = expandedCategories[mainCat] ?? true;
+
+            return (
+              <div key={mainCat} className="space-y-1">
+                {hasSubCategories ? (
+                  <Collapsible open={isExpanded} onOpenChange={() => toggleCategoryExpanded(mainCat)}>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center flex-1 min-w-0">
+                        <Checkbox
+                          id={`main-${mainCat}`}
+                          checked={selectedMainCategories.includes(mainCat)}
+                          onCheckedChange={() => toggleFilter(mainCat, setSelectedMainCategories)}
+                          data-testid={`checkbox-main-category-${mainCat}`}
+                        />
+                        <Label htmlFor={`main-${mainCat}`} className="ml-2 text-sm cursor-pointer flex-1">
+                          {mainCat}
+                        </Label>
+                      </div>
+                      <CollapsibleTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0 shrink-0" 
+                          data-testid={`button-toggle-${mainCat.toLowerCase()}`}
+                        >
+                          <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
+                        </Button>
+                      </CollapsibleTrigger>
                     </div>
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" data-testid="button-toggle-apparels">
-                        <ChevronDown className={`h-4 w-4 transition-transform ${apparelsExpanded ? "rotate-180" : ""}`} />
-                      </Button>
-                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-1">
+                      <div className="ml-6 space-y-2 border-l-2 border-muted pl-3">
+                        {subCategories.map((subCat) => (
+                          <div key={subCat} className="flex items-center">
+                            <Checkbox
+                              id={`sub-${subCat}`}
+                              checked={selectedSubCategories.includes(subCat)}
+                              onCheckedChange={() => toggleFilter(subCat, setSelectedSubCategories)}
+                              data-testid={`checkbox-sub-category-${subCat}`}
+                            />
+                            <Label htmlFor={`sub-${subCat}`} className="ml-2 text-sm cursor-pointer text-muted-foreground">
+                              {subCat}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                ) : (
+                  <div className="flex items-center">
+                    <Checkbox
+                      id={`main-${mainCat}`}
+                      checked={selectedMainCategories.includes(mainCat)}
+                      onCheckedChange={() => toggleFilter(mainCat, setSelectedMainCategories)}
+                      data-testid={`checkbox-main-category-${mainCat}`}
+                    />
+                    <Label htmlFor={`main-${mainCat}`} className="ml-2 text-sm cursor-pointer">
+                      {mainCat}
+                    </Label>
                   </div>
-                  <CollapsibleContent>
-                    <div className="ml-6 mt-2 space-y-2">
-                      {apparelSubCategories.map((subCat) => (
-                        <div key={subCat} className="flex items-center">
-                          <Checkbox
-                            id={`sub-${subCat}`}
-                            checked={selectedSubCategories.includes(subCat)}
-                            onCheckedChange={() => toggleFilter(subCat, setSelectedSubCategories)}
-                            data-testid={`checkbox-sub-category-${subCat}`}
-                          />
-                          <Label htmlFor={`sub-${subCat}`} className="ml-2 text-sm cursor-pointer">
-                            {subCat}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              ) : (
-                <div className="flex items-center">
-                  <Checkbox
-                    id={`main-${mainCat}`}
-                    checked={selectedMainCategories.includes(mainCat)}
-                    onCheckedChange={() => toggleFilter(mainCat, setSelectedMainCategories)}
-                    data-testid={`checkbox-main-category-${mainCat}`}
-                  />
-                  <Label htmlFor={`main-${mainCat}`} className="ml-2 text-sm cursor-pointer">
-                    {mainCat}
-                  </Label>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
