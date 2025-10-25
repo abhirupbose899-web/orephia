@@ -18,6 +18,7 @@ import CheckoutPage from "@/pages/checkout-page";
 import ProfilePage from "@/pages/profile-page";
 import CollectionsPage from "@/pages/collections-page";
 import AdminDashboardPage from "@/pages/admin/dashboard-page";
+import AdminHomepagePage from "@/pages/admin/homepage-page";
 import AdminProductsPage from "@/pages/admin/products-page";
 import AdminOrdersPage from "@/pages/admin/orders-page";
 import AdminCouponsPage from "@/pages/admin/coupons-page";
@@ -39,6 +40,13 @@ function Router() {
         {() => (
           <AdminLayout>
             <AdminDashboardPage />
+          </AdminLayout>
+        )}
+      </Route>
+      <Route path="/admin/homepage">
+        {() => (
+          <AdminLayout>
+            <AdminHomepagePage />
           </AdminLayout>
         )}
       </Route>

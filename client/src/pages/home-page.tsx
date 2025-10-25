@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Product } from "@shared/schema";
+import { Product, HomepageContent } from "@shared/schema";
 import { ProductCard } from "@/components/product-card";
 import { CategoryCard } from "@/components/category-card";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,19 @@ export default function HomePage() {
     queryKey: ["/api/products"],
   });
 
+  const { data: homepageContent } = useQuery<HomepageContent>({
+    queryKey: ["/api/homepage"],
+  });
+
   const newArrivals = products.slice(0, 8);
-  const featuredProducts = products.filter((p) => p.featured).slice(0, 4);
+  
+  const featuredProducts = homepageContent?.featuredProductIds && homepageContent.featuredProductIds.length > 0
+    ? products.filter(p => homepageContent.featuredProductIds?.includes(p.id))
+    : products.filter((p) => p.featured).slice(0, 4);
+  
+  const heroTitle = homepageContent?.heroTitle || "Where Elegance\nMeets Emotion";
+  const heroSubtitle = homepageContent?.heroSubtitle || "Discover curated luxury fashion with personalized AI styling recommendations";
+  const heroImage = homepageContent?.heroImage || "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1920&h=1080&fit=crop";
 
   const categories = [
     { name: "Dresses", image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&h=600&fit=crop", href: "/shop?category=dresses" },
@@ -26,15 +37,18 @@ export default function HomePage() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative h-[85vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary/10 via-background to-accent/10">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1920&h=1080&fit=crop')] bg-cover bg-center opacity-20" />
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-20" 
+          style={{ backgroundImage: `url(${heroImage})` }}
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
         
         <div className="relative max-w-3xl mx-auto text-center px-4 z-10">
-          <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl font-semibold mb-6 leading-tight" data-testid="text-hero-title">
-            Where Elegance<br />Meets Emotion
+          <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl font-semibold mb-6 leading-tight whitespace-pre-line" data-testid="text-hero-title">
+            {heroTitle}
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Discover curated luxury fashion with personalized AI styling recommendations
+            {heroSubtitle}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/shop">

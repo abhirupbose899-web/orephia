@@ -4,7 +4,8 @@ import {
   LayoutDashboard, 
   Package, 
   ShoppingCart, 
-  Tag, 
+  Tag,
+  Home,
   LogOut 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       title: "Dashboard",
       href: "/admin",
       icon: LayoutDashboard,
+    },
+    {
+      title: "Homepage",
+      href: "/admin/homepage",
+      icon: Home,
     },
     {
       title: "Products",
