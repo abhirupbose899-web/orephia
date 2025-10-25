@@ -39,7 +39,7 @@ export default function ResetPasswordPage() {
 
   const verifyToken = async (tokenToVerify: string) => {
     try {
-      await apiRequest("/api/password-reset/verify", "POST", { token: tokenToVerify });
+      await apiRequest("POST", "/api/password-reset/verify", { token: tokenToVerify });
       setIsValidToken(true);
     } catch (error: any) {
       toast({
@@ -77,7 +77,7 @@ export default function ResetPasswordPage() {
     setIsLoading(true);
 
     try {
-      await apiRequest("/api/password-reset/reset", "POST", {
+      await apiRequest("POST", "/api/password-reset/reset", {
         token,
         newPassword,
       });
@@ -130,15 +130,19 @@ export default function ResetPasswordPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <Link href="/forgot-password">
-              <Button className="w-full" data-testid="button-request-new">
-                Request New Reset Link
-              </Button>
+              <span className="block">
+                <Button className="w-full" data-testid="button-request-new">
+                  Request New Reset Link
+                </Button>
+              </span>
             </Link>
             <Link href="/auth">
-              <Button variant="outline" className="w-full" data-testid="link-back-login">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Login
-              </Button>
+              <span className="block">
+                <Button variant="outline" className="w-full" data-testid="link-back-login">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Login
+                </Button>
+              </span>
             </Link>
           </CardContent>
         </Card>
@@ -161,9 +165,11 @@ export default function ResetPasswordPage() {
           </CardHeader>
           <CardContent>
             <Link href="/auth">
-              <Button className="w-full" data-testid="link-login-now">
-                Go to Login Now
-              </Button>
+              <span className="block">
+                <Button className="w-full" data-testid="link-login-now">
+                  Go to Login Now
+                </Button>
+              </span>
             </Link>
           </CardContent>
         </Card>
@@ -231,10 +237,12 @@ export default function ResetPasswordPage() {
 
             <div className="text-center">
               <Link href="/auth">
-                <Button variant="link" data-testid="link-back-login-alt">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Login
-                </Button>
+                <span>
+                  <Button variant="link" data-testid="link-back-login-alt">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Login
+                  </Button>
+                </span>
               </Link>
             </div>
           </form>

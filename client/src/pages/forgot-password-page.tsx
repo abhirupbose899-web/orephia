@@ -29,7 +29,7 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      await apiRequest("/api/password-reset/request", "POST", { email });
+      await apiRequest("POST", "/api/password-reset/request", { email });
       
       setIsSubmitted(true);
       toast({
@@ -81,10 +81,12 @@ export default function ForgotPasswordPage() {
                 Try Another Email
               </Button>
               <Link href="/auth">
-                <Button variant="ghost" className="w-full" data-testid="link-back-login">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Login
-                </Button>
+                <span className="block">
+                  <Button variant="ghost" className="w-full" data-testid="link-back-login">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Login
+                  </Button>
+                </span>
               </Link>
             </div>
           </CardContent>
@@ -133,10 +135,12 @@ export default function ForgotPasswordPage() {
 
             <div className="text-center">
               <Link href="/auth">
-                <Button variant="link" data-testid="link-back-login-alt">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Login
-                </Button>
+                <span>
+                  <Button variant="link" data-testid="link-back-login-alt">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Login
+                  </Button>
+                </span>
               </Link>
             </div>
           </form>

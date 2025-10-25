@@ -80,9 +80,9 @@ export default function AuthPage() {
                       <div className="flex items-center justify-between">
                         <Label htmlFor="login-password">Password</Label>
                         <Link href="/forgot-password">
-                          <a className="text-sm text-primary hover:underline" data-testid="link-forgot-password">
+                          <span className="text-sm text-primary hover:underline cursor-pointer" data-testid="link-forgot-password">
                             Forgot password?
-                          </a>
+                          </span>
                         </Link>
                       </div>
                       <Input
