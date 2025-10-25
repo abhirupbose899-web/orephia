@@ -13,6 +13,7 @@ import {
   insertWishlistItemSchema,
   insertOrderSchema,
   insertAddressSchema,
+  insertCouponSchema,
   addToCartSchema
 } from "@shared/schema";
 
@@ -20,6 +21,17 @@ const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID!,
   key_secret: process.env.RAZORPAY_KEY_SECRET!,
 });
+
+// Middleware to check if user is admin
+function requireAdmin(req: any, res: any, next: any) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Admin access required" });
+  }
+  next();
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
@@ -47,7 +59,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/products", async (req, res) => {
+  app.post("/api/products", requireAdmin, async (req, res) => {
     try {
       const validatedData = insertProductSchema.parse(req.body);
       const product = await storage.createProduct(validatedData);
@@ -505,6 +517,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false,
         message: "Failed to validate coupon" 
       });
+    }
+  });
+
+  // Admin routes - Protected by requireAdmin middleware
+  
+  // Admin: Get all orders with filtering
+  app.get("/api/admin/orders", requireAdmin, async (req, res) => {
+    try {
+      const { status } = req.query;
+      const orders = await storage.getAllOrders(status as string);
+      res.json(orders);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin: Update order status
+  app.patch("/api/admin/orders/:id/status", requireAdmin, async (req, res) => {
+    try {
+      const { orderStatus } = req.body;
+      if (!orderStatus || typeof orderStatus !== "string") {
+        return res.status(400).json({ message: "Invalid order status" });
+      }
+      const order = await storage.updateOrderStatus(req.params.id, orderStatus);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      res.json(order);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Admin: Update product
+  app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = insertProductSchema.partial().parse(req.body);
+      const product = await storage.updateProduct(req.params.id, validatedData);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      res.json(product);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Admin: Delete product
+  app.delete("/api/admin/products/:id", requireAdmin, async (req, res) => {
+    try {
+      const success = await storage.deleteProduct(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      res.json({ message: "Product deleted successfully" });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin: Get dashboard statistics
+  app.get("/api/admin/stats", requireAdmin, async (req, res) => {
+    try {
+      const stats = await storage.getAdminStats();
+      res.json(stats);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin: Update product stock
+  app.patch("/api/admin/products/:id/stock", requireAdmin, async (req, res) => {
+    try {
+      const { stock } = req.body;
+      if (typeof stock !== "number" || stock < 0) {
+        return res.status(400).json({ message: "Invalid stock value" });
+      }
+      const product = await storage.updateProductStock(req.params.id, stock);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      res.json(product);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Admin: Create coupon
+  app.post("/api/admin/coupons", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = insertCouponSchema.parse(req.body);
+      const coupon = await storage.createCoupon(validatedData);
+      res.status(201).json(coupon);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Admin: Get all coupons
+  app.get("/api/admin/coupons", requireAdmin, async (req, res) => {
+    try {
+      const coupons = await storage.getAllCoupons();
+      res.json(coupons);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin: Update coupon
+  app.patch("/api/admin/coupons/:id", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = insertCouponSchema.partial().parse(req.body);
+      const coupon = await storage.updateCoupon(req.params.id, validatedData);
+      if (!coupon) {
+        return res.status(404).json({ message: "Coupon not found" });
+      }
+      res.json(coupon);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
     }
   });
 

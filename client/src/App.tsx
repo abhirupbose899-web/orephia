@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { CartProvider } from "@/hooks/use-cart";
 import { ProtectedRoute } from "./lib/protected-route";
 import { Header } from "@/components/header";
+import { AdminLayout } from "@/components/admin-layout";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import ShopPage from "@/pages/shop-page";
@@ -16,6 +17,10 @@ import WishlistPage from "@/pages/wishlist-page";
 import CheckoutPage from "@/pages/checkout-page";
 import ProfilePage from "@/pages/profile-page";
 import CollectionsPage from "@/pages/collections-page";
+import AdminDashboardPage from "@/pages/admin/dashboard-page";
+import AdminProductsPage from "@/pages/admin/products-page";
+import AdminOrdersPage from "@/pages/admin/orders-page";
+import AdminCouponsPage from "@/pages/admin/coupons-page";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -30,6 +35,34 @@ function Router() {
       <ProtectedRoute path="/wishlist" component={WishlistPage} />
       <ProtectedRoute path="/checkout" component={CheckoutPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
+      <Route path="/admin">
+        {() => (
+          <AdminLayout>
+            <AdminDashboardPage />
+          </AdminLayout>
+        )}
+      </Route>
+      <Route path="/admin/products">
+        {() => (
+          <AdminLayout>
+            <AdminProductsPage />
+          </AdminLayout>
+        )}
+      </Route>
+      <Route path="/admin/orders">
+        {() => (
+          <AdminLayout>
+            <AdminOrdersPage />
+          </AdminLayout>
+        )}
+      </Route>
+      <Route path="/admin/coupons">
+        {() => (
+          <AdminLayout>
+            <AdminCouponsPage />
+          </AdminLayout>
+        )}
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );

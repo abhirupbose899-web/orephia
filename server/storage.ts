@@ -9,11 +9,14 @@ import {
   InsertWishlistItem,
   AddressRow,
   InsertAddress,
+  Coupon,
+  InsertCoupon,
   users,
   products,
   wishlistItems,
   orders,
   addresses,
+  coupons,
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -34,6 +37,9 @@ export interface IStorage {
   getProduct(id: string): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
   searchProducts(query: string, filters?: any): Promise<Product[]>;
+  updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined>;
+  deleteProduct(id: string): Promise<boolean>;
+  updateProductStock(id: string, stock: number): Promise<Product | undefined>;
   
   // Wishlist methods
   getWishlist(userId: string): Promise<WishlistItem[]>;
@@ -44,13 +50,23 @@ export interface IStorage {
   createOrder(order: InsertOrder): Promise<Order>;
   getUserOrders(userId: string): Promise<Order[]>;
   getOrder(id: string): Promise<Order | undefined>;
+  getAllOrders(statusFilter?: string): Promise<Order[]>;
+  updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
   
   // Address methods
   getUserAddresses(userId: string): Promise<AddressRow[]>;
   createAddress(userId: string, address: InsertAddress): Promise<AddressRow>;
   
+  // Coupon methods
+  createCoupon(coupon: InsertCoupon): Promise<Coupon>;
+  getAllCoupons(): Promise<Coupon[]>;
+  updateCoupon(id: string, data: Partial<InsertCoupon>): Promise<Coupon | undefined>;
+  
+  // Admin methods
+  getAdminStats(): Promise<any>;
+  
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: any;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -186,6 +202,71 @@ export class DatabaseStorage implements IStorage {
       userId,
     }).returning();
     return newAddress;
+  }
+
+  // Admin product methods
+  async updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined> {
+    const [product] = await db.update(products).set(data).where(eq(products.id, id)).returning();
+    return product || undefined;
+  }
+
+  async deleteProduct(id: string): Promise<boolean> {
+    const result = await db.delete(products).where(eq(products.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async updateProductStock(id: string, stock: number): Promise<Product | undefined> {
+    const [product] = await db.update(products).set({ stock }).where(eq(products.id, id)).returning();
+    return product || undefined;
+  }
+
+  // Admin order methods
+  async getAllOrders(statusFilter?: string): Promise<Order[]> {
+    if (statusFilter) {
+      return await db.select().from(orders).where(eq(orders.orderStatus, statusFilter)).orderBy(sql`${orders.createdAt} DESC`);
+    }
+    return await db.select().from(orders).orderBy(sql`${orders.createdAt} DESC`);
+  }
+
+  async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
+    const [order] = await db.update(orders).set({ orderStatus: status }).where(eq(orders.id, id)).returning();
+    return order || undefined;
+  }
+
+  // Coupon methods
+  async createCoupon(coupon: InsertCoupon): Promise<Coupon> {
+    const [newCoupon] = await db.insert(coupons).values(coupon).returning();
+    return newCoupon;
+  }
+
+  async getAllCoupons(): Promise<Coupon[]> {
+    return await db.select().from(coupons).orderBy(sql`${coupons.createdAt} DESC`);
+  }
+
+  async updateCoupon(id: string, data: Partial<InsertCoupon>): Promise<Coupon | undefined> {
+    const [coupon] = await db.update(coupons).set(data).where(eq(coupons.id, id)).returning();
+    return coupon || undefined;
+  }
+
+  // Admin statistics
+  async getAdminStats(): Promise<any> {
+    const [totalOrders] = await db.select({ count: sql<number>`count(*)` }).from(orders);
+    const [totalProducts] = await db.select({ count: sql<number>`count(*)` }).from(products);
+    const [lowStockProducts] = await db.select({ count: sql<number>`count(*)` }).from(products).where(sql`${products.stock} < 10`);
+    
+    const [revenueData] = await db.select({ 
+      total: sql<string>`COALESCE(SUM(CAST(${orders.total} AS DECIMAL)), 0)` 
+    }).from(orders).where(eq(orders.paymentStatus, 'paid'));
+
+    const pendingOrders = await db.select({ count: sql<number>`count(*)` }).from(orders).where(eq(orders.orderStatus, 'processing'));
+    
+    return {
+      totalOrders: totalOrders?.count || 0,
+      totalProducts: totalProducts?.count || 0,
+      lowStockProducts: lowStockProducts?.count || 0,
+      totalRevenue: revenueData?.total || "0",
+      pendingOrders: pendingOrders[0]?.count || 0,
+    };
   }
 }
 
