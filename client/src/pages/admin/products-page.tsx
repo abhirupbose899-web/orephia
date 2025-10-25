@@ -30,6 +30,7 @@ export default function AdminProductsPage() {
   const { toast } = useToast();
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -44,6 +45,10 @@ export default function AdminProductsPage() {
       mainCategory: "",
       subCategory: "",
       designer: "",
+      images: "",
+      sizes: "",
+      colors: "",
+      tags: "",
     },
   });
 
@@ -79,6 +84,25 @@ export default function AdminProductsPage() {
     },
   });
 
+  const createProductMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "Product created successfully" });
+      setDialogOpen(false);
+      setIsCreating(false);
+    },
+    onError: () => {
+      toast({ title: "Failed to create product", variant: "destructive" });
+    },
+  });
+
   const updateProductMutation = useMutation({
     mutationFn: async (data: { id: string; updates: Partial<Product> }) => {
       return await apiRequest(`/api/admin/products/${data.id}`, {
@@ -103,7 +127,27 @@ export default function AdminProductsPage() {
     updateStockMutation.mutate({ id: product.id, stock: newStock });
   };
 
+  const handleCreate = () => {
+    setIsCreating(true);
+    setEditingProduct(null);
+    form.reset({
+      title: "",
+      description: "",
+      price: "",
+      stock: 0,
+      mainCategory: "",
+      subCategory: "",
+      designer: "",
+      images: "",
+      sizes: "",
+      colors: "",
+      tags: "",
+    });
+    setDialogOpen(true);
+  };
+
   const handleEdit = (product: Product) => {
+    setIsCreating(false);
     setEditingProduct(product);
     form.reset({
       title: product.title,
@@ -113,25 +157,37 @@ export default function AdminProductsPage() {
       mainCategory: product.mainCategory || "",
       subCategory: product.subCategory || "",
       designer: product.designer || "",
+      images: product.images?.join(", ") || "",
+      sizes: product.sizes?.join(", ") || "",
+      colors: product.colors?.join(", ") || "",
+      tags: product.tags?.join(", ") || "",
     });
     setDialogOpen(true);
   };
 
   const handleSave = (formData: any) => {
-    if (!editingProduct) return;
+    const productData = {
+      title: formData.title,
+      description: formData.description,
+      price: parseFloat(formData.price),
+      stock: formData.stock,
+      mainCategory: formData.mainCategory,
+      subCategory: formData.subCategory || null,
+      designer: formData.designer || null,
+      images: formData.images ? formData.images.split(",").map((s: string) => s.trim()) : [],
+      sizes: formData.sizes ? formData.sizes.split(",").map((s: string) => s.trim()) : [],
+      colors: formData.colors ? formData.colors.split(",").map((s: string) => s.trim()) : [],
+      tags: formData.tags ? formData.tags.split(",").map((s: string) => s.trim()) : [],
+    };
 
-    updateProductMutation.mutate({
-      id: editingProduct.id,
-      updates: {
-        title: formData.title,
-        description: formData.description,
-        price: formData.price,
-        stock: formData.stock,
-        mainCategory: formData.mainCategory,
-        subCategory: formData.subCategory,
-        designer: formData.designer,
-      },
-    });
+    if (isCreating) {
+      createProductMutation.mutate(productData);
+    } else if (editingProduct) {
+      updateProductMutation.mutate({
+        id: editingProduct.id,
+        updates: productData,
+      });
+    }
   };
 
   if (isLoading) {
@@ -152,6 +208,10 @@ export default function AdminProductsPage() {
           <h1 className="font-serif text-4xl font-semibold mb-2">Products</h1>
           <p className="text-muted-foreground">Manage your product catalog</p>
         </div>
+        <Button onClick={handleCreate} data-testid="button-add-product">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Product
+        </Button>
       </div>
 
       <div className="border rounded-md">
@@ -260,47 +320,63 @@ export default function AdminProductsPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Product</DialogTitle>
+            <DialogTitle>{isCreating ? "Add New Product" : "Edit Product"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(handleSave)} className="space-y-4">
             <div>
               <Label htmlFor="title">Title</Label>
-              <Input {...form.register("title")} id="title" data-testid="input-title" />
+              <Input {...form.register("title")} id="title" data-testid="input-title" required />
             </div>
             <div>
               <Label htmlFor="description">Description</Label>
-              <Textarea {...form.register("description")} id="description" data-testid="input-description" />
+              <Textarea {...form.register("description")} id="description" data-testid="input-description" required />
+            </div>
+            <div>
+              <Label htmlFor="designer">Designer/Brand</Label>
+              <Input {...form.register("designer")} id="designer" data-testid="input-designer" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="price">Price</Label>
-                <Input {...form.register("price")} id="price" type="number" step="0.01" data-testid="input-price" />
+                <Label htmlFor="price">Price (USD)</Label>
+                <Input {...form.register("price")} id="price" type="number" step="0.01" data-testid="input-price" required />
               </div>
               <div>
-                <Label htmlFor="stock">Stock</Label>
-                <Input {...form.register("stock", { valueAsNumber: true })} id="stock" type="number" data-testid="input-stock" />
+                <Label htmlFor="stock">Stock Quantity</Label>
+                <Input {...form.register("stock", { valueAsNumber: true })} id="stock" type="number" data-testid="input-stock" required />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="mainCategory">Main Category</Label>
-                <Input {...form.register("mainCategory")} id="mainCategory" data-testid="input-mainCategory" />
+                <Input {...form.register("mainCategory")} id="mainCategory" placeholder="e.g., Apparels, Shoes, Bags" data-testid="input-mainCategory" required />
               </div>
               <div>
                 <Label htmlFor="subCategory">Sub Category</Label>
-                <Input {...form.register("subCategory")} id="subCategory" data-testid="input-subCategory" />
+                <Input {...form.register("subCategory")} id="subCategory" placeholder="e.g., Dresses, Jackets" data-testid="input-subCategory" />
               </div>
             </div>
             <div>
-              <Label htmlFor="designer">Designer</Label>
-              <Input {...form.register("designer")} id="designer" data-testid="input-designer" />
+              <Label htmlFor="images">Image URLs (comma-separated)</Label>
+              <Textarea {...form.register("images")} id="images" placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg" data-testid="input-images" rows={2} />
+            </div>
+            <div>
+              <Label htmlFor="sizes">Available Sizes (comma-separated)</Label>
+              <Input {...form.register("sizes")} id="sizes" placeholder="XS, S, M, L, XL" data-testid="input-sizes" />
+            </div>
+            <div>
+              <Label htmlFor="colors">Available Colors (comma-separated)</Label>
+              <Input {...form.register("colors")} id="colors" placeholder="Black, White, Navy" data-testid="input-colors" />
+            </div>
+            <div>
+              <Label htmlFor="tags">Tags (comma-separated)</Label>
+              <Input {...form.register("tags")} id="tags" placeholder="casual, formal, summer" data-testid="input-tags" />
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} data-testid="button-cancel">
                 Cancel
               </Button>
-              <Button type="submit" disabled={updateProductMutation.isPending} data-testid="button-save">
-                {updateProductMutation.isPending ? "Saving..." : "Save Changes"}
+              <Button type="submit" disabled={createProductMutation.isPending || updateProductMutation.isPending} data-testid="button-save">
+                {createProductMutation.isPending || updateProductMutation.isPending ? "Saving..." : isCreating ? "Create Product" : "Save Changes"}
               </Button>
             </div>
           </form>
