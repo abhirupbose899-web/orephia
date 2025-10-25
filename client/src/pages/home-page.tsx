@@ -67,7 +67,7 @@ export default function HomePage() {
           </div>
           
           {/* Decorative Elements */}
-          <div className="mt-16 flex justify-center gap-12 text-white/80 text-sm">
+          <div className="mt-16 flex justify-center gap-12 text-sm text-[#793d3d]">
             <div className="flex items-center gap-2">
               <Award className="h-5 w-5" />
               <span>Premium Quality</span>
