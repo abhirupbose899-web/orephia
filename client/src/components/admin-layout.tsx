@@ -82,8 +82,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Sidebar */}
       <aside className="w-64 border-r bg-card">
         <div className="p-6 border-b">
-          <Link href="/">
-            <a className="font-serif text-2xl font-semibold" data-testid="link-home">Orephia Admin</a>
+          <Link href="/" className="font-serif text-2xl font-semibold" data-testid="link-home">
+            Orephia Admin
           </Link>
         </div>
         
@@ -92,18 +92,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             const Icon = item.icon;
             const isActive = location === item.href;
             return (
-              <Link key={item.href} href={item.href}>
-                <a 
-                  className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
-                    isActive 
-                      ? "bg-primary text-primary-foreground" 
-                      : "hover-elevate active-elevate-2"
-                  }`}
-                  data-testid={`link-${item.title.toLowerCase()}`}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span className="font-medium">{item.title}</span>
-                </a>
+              <Link 
+                key={item.href} 
+                href={item.href}
+                className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
+                  isActive 
+                    ? "bg-primary text-primary-foreground" 
+                    : "hover-elevate active-elevate-2"
+                }`}
+                data-testid={`link-${item.title.toLowerCase()}`}
+              >
+                <Icon className="h-5 w-5" />
+                <span className="font-medium">{item.title}</span>
               </Link>
             );
           })}

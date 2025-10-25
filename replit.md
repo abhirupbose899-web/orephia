@@ -81,6 +81,7 @@ Preferred communication style: Simple, everyday language.
 - Orders table: Transaction records with JSON fields for order items and shipping details, includes discount and couponCode fields
 - Addresses table: User shipping/billing addresses
 - Coupons table: Discount codes with validation rules (expiration, usage limits, minimum purchase), tracks usage count
+- Homepage content table: Curated homepage content including hero section (title, subtitle, image) and featured product IDs for admin-controlled homepage customization
 - Session store table: Server-side session persistence
 
 **Data Modeling Decisions**
