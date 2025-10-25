@@ -64,12 +64,6 @@ export default function HomePage() {
                 Explore Collection
               </Button>
             </Link>
-            <Link href="/shop">
-              <Button size="lg" variant="outline" className="text-base backdrop-blur-md bg-white/10 text-white border-2 border-white/50 shadow-xl" data-testid="button-ai-stylist">
-                <Sparkles className="mr-2 h-5 w-5" />
-                AI Style Assistant
-              </Button>
-            </Link>
           </div>
           
           {/* Decorative Elements */}
