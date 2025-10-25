@@ -89,7 +89,7 @@ export default function ResetPasswordPage() {
       });
 
       setTimeout(() => {
-        setLocation("/login");
+        setLocation("/auth");
       }, 3000);
     } catch (error: any) {
       toast({
@@ -134,7 +134,7 @@ export default function ResetPasswordPage() {
                 Request New Reset Link
               </Button>
             </Link>
-            <Link href="/login">
+            <Link href="/auth">
               <Button variant="outline" className="w-full" data-testid="link-back-login">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Login
@@ -160,7 +160,7 @@ export default function ResetPasswordPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/login">
+            <Link href="/auth">
               <Button className="w-full" data-testid="link-login-now">
                 Go to Login Now
               </Button>
@@ -230,7 +230,7 @@ export default function ResetPasswordPage() {
             </Button>
 
             <div className="text-center">
-              <Link href="/login">
+              <Link href="/auth">
                 <Button variant="link" data-testid="link-back-login-alt">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Login
