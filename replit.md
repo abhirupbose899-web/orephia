@@ -29,15 +29,16 @@ Preferred communication style: Simple, everyday language.
 
 **State Management**
 - TanStack Query (React Query) for server state management, caching, and data synchronization
-- Context API for global state (authentication, shopping cart)
-- Local storage for cart persistence across sessions
+- Context API for global state (authentication, shopping cart, currency conversion)
+- Local storage for cart persistence across sessions and currency preferences
 - Session-based wishlist tied to authenticated users
 
 **Key Design Patterns**
-- Custom hooks pattern for reusable logic (useAuth, useCart, useToast, useMobile)
+- Custom hooks pattern for reusable logic (useAuth, useCart, useToast, useMobile, useCurrency)
 - Protected route wrapper component for authentication-required pages
 - Centralized API request handling with error boundaries
 - Toast notifications for user feedback on actions
+- Reusable Price component for consistent multi-currency display throughout the app
 
 ### Backend Architecture
 
@@ -75,12 +76,13 @@ Preferred communication style: Simple, everyday language.
 - Connection pooling for efficient database resource usage
 
 **Schema Design**
-- Users table: Authentication and profile information
-- Products table: Complete product catalog with JSON fields for arrays (images, sizes, colors, tags), hierarchical categorization with mainCategory and subCategory fields
+- Users table: Authentication and profile information with country and preferred currency fields for multi-currency support
+- Products table: Complete product catalog with JSON fields for arrays (images, sizes, colors, tags), hierarchical categorization with mainCategory and subCategory fields, newArrival boolean for featured products
 - Wishlist items table: Many-to-many relationship between users and products
 - Orders table: Transaction records with JSON fields for order items and shipping details, includes discount and couponCode fields
 - Addresses table: User shipping/billing addresses
 - Coupons table: Discount codes with validation rules (expiration, usage limits, minimum purchase), tracks usage count
+- Categories table: Hierarchical category management with mainCategory and optional subCategory fields for dynamic product categorization
 - Homepage content table: Curated homepage content including hero section (title, subtitle, image) and featured product IDs for admin-controlled homepage customization
 - Session store table: Server-side session persistence
 
@@ -97,11 +99,21 @@ Preferred communication style: Simple, everyday language.
 ### External Dependencies
 
 **Payment Processing**
-- Razorpay integration for secure payment processing (INR currency with 83x USD conversion)
+- Razorpay integration for secure payment processing (base currency: INR)
 - Server-side order creation with trusted product pricing (fetched from database, never client-provided)
 - Payment verification using signature validation with crypto
 - Coupon discounts applied to payment amounts server-side
 - Support for both test and production environments via environment variables
+
+**Multi-Currency Support**
+- Dynamic currency conversion using Open Exchange Rates API with free tier (no API key required)
+- Support for 50+ currencies including USD, EUR, GBP, JPY, AUD, CAD, SGD, AED, and more
+- Country selection during user signup with automatic currency assignment
+- Currency selector in header for easy switching between currencies
+- Real-time exchange rate fetching with 1-hour caching to minimize API calls
+- All prices stored in database in INR (base currency), converted at display time
+- Consistent price formatting using reusable Price component throughout the application
+- Payments processed in INR via Razorpay regardless of display currency
 
 **Coupon/Discount System**
 - Server-side coupon validation endpoint that recalculates discounts from cart items
