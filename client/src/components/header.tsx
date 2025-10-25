@@ -62,9 +62,9 @@ export function Header() {
             </Sheet>
 
             <Link href="/">
-              <div className="flex items-center gap-3 cursor-pointer" data-testid="link-home">
-                <img src={logoImage} alt="Orephia" className="h-12 w-12 object-contain" />
-                <span className="font-serif text-2xl font-semibold hidden sm:block">Orephia</span>
+              <div className="flex flex-col items-center gap-1 cursor-pointer" data-testid="link-home">
+                <img src={logoImage} alt="Orephia" className="h-16 w-16 object-contain" />
+                <span className="font-serif text-sm font-semibold tracking-wide">Orephia</span>
               </div>
             </Link>
           </div>
