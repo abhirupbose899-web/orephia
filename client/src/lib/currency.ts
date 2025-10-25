@@ -194,3 +194,51 @@ export function getCurrencyForCountry(country: string): string {
 export function getAvailableCountries(): string[] {
   return Object.keys(COUNTRY_CURRENCY_MAP).sort();
 }
+
+/**
+ * Mapping of currency codes to their primary country/region
+ */
+export const CURRENCY_TO_COUNTRY: Record<string, string> = {
+  USD: "United States",
+  GBP: "United Kingdom",
+  INR: "India",
+  CAD: "Canada",
+  AUD: "Australia",
+  EUR: "Europe",
+  JPY: "Japan",
+  CNY: "China",
+  SGD: "Singapore",
+  AED: "UAE",
+  SAR: "Saudi Arabia",
+  KWD: "Kuwait",
+  CHF: "Switzerland",
+  SEK: "Sweden",
+  NOK: "Norway",
+  DKK: "Denmark",
+  KRW: "South Korea",
+  BRL: "Brazil",
+  MXN: "Mexico",
+  ZAR: "South Africa",
+  NZD: "New Zealand",
+  HKD: "Hong Kong",
+  THB: "Thailand",
+  MYR: "Malaysia",
+  IDR: "Indonesia",
+  PHP: "Philippines",
+  VND: "Vietnam",
+  PLN: "Poland",
+  TRY: "Turkey",
+  RUB: "Russia",
+  ARS: "Argentina",
+  CLP: "Chile",
+  COP: "Colombia",
+  EGP: "Egypt",
+  ILS: "Israel",
+  QAR: "Qatar",
+  BHD: "Bahrain",
+  OMR: "Oman",
+  PKR: "Pakistan",
+  BDT: "Bangladesh",
+  LKR: "Sri Lanka",
+  NPR: "Nepal",
+};
