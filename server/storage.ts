@@ -19,6 +19,8 @@ import {
   InsertLoyaltyTransaction,
   StyleProfile,
   InsertStyleProfile,
+  PasswordResetToken,
+  InsertPasswordResetToken,
   users,
   products,
   wishlistItems,
@@ -29,6 +31,7 @@ import {
   categories,
   loyaltyTransactions,
   styleProfiles,
+  passwordResetTokens,
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -96,6 +99,12 @@ export interface IStorage {
   // Style Profile methods
   getStyleProfile(userId: string): Promise<StyleProfile | undefined>;
   createOrUpdateStyleProfile(userId: string, data: InsertStyleProfile): Promise<StyleProfile>;
+  
+  // Password Reset methods
+  createPasswordResetToken(token: InsertPasswordResetToken): Promise<PasswordResetToken>;
+  getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined>;
+  deletePasswordResetToken(token: string): Promise<void>;
+  updateUserPassword(userId: string, hashedPassword: string): Promise<void>;
   
   // Session store
   sessionStore: any;
@@ -414,6 +423,29 @@ export class DatabaseStorage implements IStorage {
       const [created] = await db.insert(styleProfiles).values({ ...data, userId }).returning();
       return created;
     }
+  }
+
+  // Password Reset methods
+  async createPasswordResetToken(tokenData: InsertPasswordResetToken): Promise<PasswordResetToken> {
+    const [token] = await db.insert(passwordResetTokens).values(tokenData).returning();
+    return token;
+  }
+
+  async getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined> {
+    const [resetToken] = await db.select()
+      .from(passwordResetTokens)
+      .where(eq(passwordResetTokens.token, token));
+    return resetToken || undefined;
+  }
+
+  async deletePasswordResetToken(token: string): Promise<void> {
+    await db.delete(passwordResetTokens).where(eq(passwordResetTokens.token, token));
+  }
+
+  async updateUserPassword(userId: string, hashedPassword: string): Promise<void> {
+    await db.update(users)
+      .set({ password: hashedPassword })
+      .where(eq(users.id, userId));
   }
 }
 
