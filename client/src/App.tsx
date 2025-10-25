@@ -39,46 +39,46 @@ function Router() {
       <ProtectedRoute path="/checkout" component={CheckoutPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
       <Route path="/admin">
-        {() => (
+        {() => (<>
           <AdminLayout>
             <AdminDashboardPage />
           </AdminLayout>
-        )}
+        </>)}
       </Route>
       <Route path="/admin/homepage">
-        {() => (
+        {() => (<>
           <AdminLayout>
             <AdminHomepagePage />
           </AdminLayout>
-        )}
+        </>)}
       </Route>
       <Route path="/admin/products">
-        {() => (
+        {() => (<>
           <AdminLayout>
             <AdminProductsPage />
           </AdminLayout>
-        )}
+        </>)}
       </Route>
       <Route path="/admin/categories">
-        {() => (
+        {() => (<>
           <AdminLayout>
             <AdminCategoriesPage />
           </AdminLayout>
-        )}
+        </>)}
       </Route>
       <Route path="/admin/orders">
-        {() => (
+        {() => (<>
           <AdminLayout>
             <AdminOrdersPage />
           </AdminLayout>
-        )}
+        </>)}
       </Route>
       <Route path="/admin/coupons">
-        {() => (
+        {() => (<>
           <AdminLayout>
             <AdminCouponsPage />
           </AdminLayout>
-        )}
+        </>)}
       </Route>
       <Route component={NotFound} />
     </Switch>
