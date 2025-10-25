@@ -118,14 +118,28 @@ export function Header() {
                 </Badge>
               )}
             </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => window.location.href = (user ? '/profile' : '/auth')}
-              data-testid="button-profile"
-            >
-              <User className="h-5 w-5" />
-            </Button>
+            {user ? (
+              <Link href="/profile">
+                <button
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover-elevate active-elevate-2"
+                  data-testid="button-profile"
+                >
+                  <span className="hidden md:block text-sm font-medium">
+                    Hi, {user.fullName || user.username}
+                  </span>
+                  <User className="h-5 w-5" />
+                </button>
+              </Link>
+            ) : (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => window.location.href = '/auth'}
+                data-testid="button-profile"
+              >
+                <User className="h-5 w-5" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
