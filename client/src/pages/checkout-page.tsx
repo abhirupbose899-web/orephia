@@ -9,9 +9,9 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Price } from "@/components/price";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
-import { Loader2, CheckCircle } from "lucide-react";
+import { Loader2, CheckCircle, Gift } from "lucide-react";
 
 declare global {
   interface Window {
@@ -27,6 +27,8 @@ export default function CheckoutPage() {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [pointsToRedeem, setPointsToRedeem] = useState<number>(0);
+  const [pointsApplied, setPointsApplied] = useState<number>(0);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -55,6 +57,10 @@ export default function CheckoutPage() {
 
   const { data: addresses = [] } = useQuery<any[]>({
     queryKey: ["/api/addresses"],
+  });
+
+  const { data: loyaltyBalance } = useQuery<{ points: number }>({
+    queryKey: ["/api/loyalty/balance"],
   });
 
   const [shippingAddress, setShippingAddress] = useState<InsertAddress>({
@@ -118,7 +124,21 @@ export default function CheckoutPage() {
       const res = await apiRequest("POST", "/api/orders", orderPayload);
       return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Redeem points if applied
+      if (pointsApplied > 0) {
+        try {
+          await apiRequest("POST", "/api/loyalty/redeem", {
+            points: pointsApplied,
+          });
+          // Invalidate loyalty balance cache
+          queryClient.invalidateQueries({ queryKey: ["/api/loyalty/balance"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/loyalty/transactions"] });
+        } catch (error) {
+          console.error("Failed to redeem loyalty points:", error);
+        }
+      }
+      
       clearCart();
       localStorage.removeItem("appliedCoupon");
       setOrderPlaced(true);
@@ -249,9 +269,49 @@ export default function CheckoutPage() {
     return sum + price * item.quantity;
   }, 0);
 
+  const discount = appliedCoupon ? parseFloat(appliedCoupon.discountAmount) : 0;
+  const pointsDiscount = pointsApplied / 100; // 100 points = 1 INR
   const shipping = subtotal > 100 ? 0 : 10;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
+  const tax = (subtotal - discount - pointsDiscount) * 0.08;
+  const total = subtotal - discount - pointsDiscount + shipping + tax;
+
+  const handleApplyPoints = () => {
+    const availablePoints = loyaltyBalance?.points || 0;
+    if (pointsToRedeem <= 0) {
+      toast({
+        title: "Invalid Points",
+        description: "Please enter a valid amount of points to redeem",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (pointsToRedeem > availablePoints) {
+      toast({
+        title: "Insufficient Points",
+        description: `You only have ${availablePoints} points available`,
+        variant: "destructive",
+      });
+      return;
+    }
+    // Maximum discount is the total amount (can't go negative)
+    const maxDiscountPoints = Math.floor(total * 100);
+    const actualPoints = Math.min(pointsToRedeem, maxDiscountPoints);
+    
+    setPointsApplied(actualPoints);
+    toast({
+      title: "Points Applied",
+      description: `${actualPoints} points applied (₹${(actualPoints / 100).toFixed(2)} discount)`,
+    });
+  };
+
+  const handleRemovePoints = () => {
+    setPointsApplied(0);
+    setPointsToRedeem(0);
+    toast({
+      title: "Points Removed",
+      description: "Loyalty points discount removed",
+    });
+  };
 
   if (cart.length === 0 && !orderPlaced) {
     setLocation("/cart");
@@ -484,11 +544,73 @@ export default function CheckoutPage() {
           <div className="lg:col-span-1">
             <Card className="p-6 sticky top-24">
               <h2 className="font-semibold text-lg mb-6">Order Summary</h2>
+              
+              {/* Loyalty Points Section */}
+              {loyaltyBalance && loyaltyBalance.points > 0 && (
+                <div className="mb-6 p-4 bg-primary/5 rounded-lg border">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Gift className="h-4 w-4 text-primary" />
+                    <span className="font-medium text-sm">Use Loyalty Points</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    You have {loyaltyBalance.points} points available (₹{(loyaltyBalance.points / 100).toFixed(2)} value)
+                  </p>
+                  {pointsApplied === 0 ? (
+                    <div className="flex gap-2">
+                      <Input
+                        type="number"
+                        placeholder="Points to redeem"
+                        value={pointsToRedeem || ""}
+                        onChange={(e) => setPointsToRedeem(parseInt(e.target.value) || 0)}
+                        min={0}
+                        max={loyaltyBalance.points}
+                        className="flex-1"
+                        data-testid="input-points-redeem"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={handleApplyPoints}
+                        disabled={!pointsToRedeem || pointsToRedeem <= 0}
+                        data-testid="button-apply-points"
+                      >
+                        Apply
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                      <span className="text-sm text-green-700 dark:text-green-400">
+                        {pointsApplied} points applied
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleRemovePoints}
+                        data-testid="button-remove-points"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
                   <span><Price amount={subtotal} /></span>
                 </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                    <span>Coupon Discount</span>
+                    <span>-<Price amount={discount} /></span>
+                  </div>
+                )}
+                {pointsDiscount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                    <span>Points Discount</span>
+                    <span>-<Price amount={pointsDiscount} /></span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Shipping</span>
                   <span>{shipping === 0 ? "Free" : <Price amount={shipping} />}</span>
