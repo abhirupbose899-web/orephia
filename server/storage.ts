@@ -13,6 +13,8 @@ import {
   InsertCoupon,
   HomepageContent,
   InsertHomepageContent,
+  Category,
+  InsertCategory,
   users,
   products,
   wishlistItems,
@@ -20,6 +22,7 @@ import {
   addresses,
   coupons,
   homepageContent,
+  categories,
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -68,6 +71,12 @@ export interface IStorage {
   // Homepage content methods
   getHomepageContent(): Promise<HomepageContent | undefined>;
   updateHomepageContent(data: InsertHomepageContent): Promise<HomepageContent>;
+  
+  // Category methods
+  getAllCategories(): Promise<Category[]>;
+  getCategory(id: string): Promise<Category | undefined>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  deleteCategory(id: string): Promise<boolean>;
   
   // Admin methods
   getAdminStats(): Promise<any>;
@@ -274,6 +283,26 @@ export class DatabaseStorage implements IStorage {
       const [created] = await db.insert(homepageContent).values(data).returning();
       return created;
     }
+  }
+
+  // Category methods
+  async getAllCategories(): Promise<Category[]> {
+    return await db.select().from(categories).orderBy(categories.mainCategory, categories.subCategory);
+  }
+
+  async getCategory(id: string): Promise<Category | undefined> {
+    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+    return category || undefined;
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const [newCategory] = await db.insert(categories).values(category).returning();
+    return newCategory;
+  }
+
+  async deleteCategory(id: string): Promise<boolean> {
+    const result = await db.delete(categories).where(eq(categories.id, id));
+    return true;
   }
 
   // Admin statistics

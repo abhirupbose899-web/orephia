@@ -15,6 +15,7 @@ import {
   insertAddressSchema,
   insertCouponSchema,
   insertHomepageContentSchema,
+  insertCategorySchema,
   addToCartSchema
 } from "@shared/schema";
 
@@ -637,6 +638,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(coupon);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Admin: Category management routes
+  app.get("/api/admin/categories", requireAdmin, async (req, res) => {
+    try {
+      const categories = await storage.getAllCategories();
+      res.json(categories);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/admin/categories", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = insertCategorySchema.parse(req.body);
+      const category = await storage.createCategory(validatedData);
+      res.status(201).json(category);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/admin/categories/:id", requireAdmin, async (req, res) => {
+    try {
+      const success = await storage.deleteCategory(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+      res.json({ message: "Category deleted successfully" });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Public: Get all categories
+  app.get("/api/categories", async (req, res) => {
+    try {
+      const categories = await storage.getAllCategories();
+      res.json(categories);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
     }
   });
 

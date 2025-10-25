@@ -14,6 +14,14 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Categories table
+export const categories = pgTable("categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  mainCategory: text("main_category").notNull(),
+  subCategory: text("sub_category"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Products table
 export const products = pgTable("products", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -32,6 +40,7 @@ export const products = pgTable("products", {
   careInstructions: text("care_instructions"),
   tags: jsonb("tags").$type<string[]>(),
   featured: boolean("featured").default(false),
+  newArrival: boolean("new_arrival").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -175,6 +184,11 @@ export const insertHomepageContentSchema = createInsertSchema(homepageContent).o
   updatedAt: true,
 });
 
+export const insertCategorySchema = createInsertSchema(categories).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Select types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -190,6 +204,8 @@ export type Coupon = typeof coupons.$inferSelect;
 export type InsertCoupon = z.infer<typeof insertCouponSchema>;
 export type HomepageContent = typeof homepageContent.$inferSelect;
 export type InsertHomepageContent = z.infer<typeof insertHomepageContentSchema>;
+export type Category = typeof categories.$inferSelect;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
 
 // Cart schema for validation
 export const cartItemSchema = z.object({
