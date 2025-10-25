@@ -59,12 +59,12 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
             <Link href="/shop">
-              <Button size="lg" className="text-base px-8 py-6 bg-white text-primary border-2 border-white hover:bg-primary hover:text-white hover:border-primary transition-all shadow-xl" data-testid="button-shop-now">
+              <Button size="lg" className="text-base bg-white text-primary border-2 border-white shadow-xl" data-testid="button-shop-now">
                 <ShoppingBag className="mr-2 h-5 w-5" />
                 Explore Collection
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="text-base px-8 py-6 backdrop-blur-md bg-white/10 text-white border-2 border-white/50 hover:bg-white/20 shadow-xl" data-testid="button-ai-stylist">
+            <Button size="lg" variant="outline" className="text-base backdrop-blur-md bg-white/10 text-white border-2 border-white/50 shadow-xl" data-testid="button-ai-stylist">
               <Sparkles className="mr-2 h-5 w-5" />
               AI Style Assistant
             </Button>
@@ -236,7 +236,7 @@ export default function HomePage() {
               <p className="text-lg text-muted-foreground">Fresh from the runway, exclusively for you</p>
             </div>
             <Link href="/shop">
-              <Button variant="outline" size="lg" className="border-primary text-primary hover:bg-primary hover:text-white" data-testid="button-view-all">
+              <Button variant="outline" size="lg" className="border-primary text-primary" data-testid="button-view-all">
                 View All Arrivals
               </Button>
             </Link>
