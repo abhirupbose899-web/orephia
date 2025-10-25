@@ -112,7 +112,6 @@ export function Header() {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2">
-            <CurrencySelector />
             <Button variant="ghost" size="icon" className="hover:text-primary transition-colors" data-testid="button-search">
               <Search className="h-5 w-5" />
             </Button>
