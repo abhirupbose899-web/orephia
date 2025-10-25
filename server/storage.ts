@@ -11,12 +11,15 @@ import {
   InsertAddress,
   Coupon,
   InsertCoupon,
+  HomepageContent,
+  InsertHomepageContent,
   users,
   products,
   wishlistItems,
   orders,
   addresses,
   coupons,
+  homepageContent,
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -61,6 +64,10 @@ export interface IStorage {
   createCoupon(coupon: InsertCoupon): Promise<Coupon>;
   getAllCoupons(): Promise<Coupon[]>;
   updateCoupon(id: string, data: Partial<InsertCoupon>): Promise<Coupon | undefined>;
+  
+  // Homepage content methods
+  getHomepageContent(): Promise<HomepageContent | undefined>;
+  updateHomepageContent(data: InsertHomepageContent): Promise<HomepageContent>;
   
   // Admin methods
   getAdminStats(): Promise<any>;
@@ -246,6 +253,27 @@ export class DatabaseStorage implements IStorage {
   async updateCoupon(id: string, data: Partial<InsertCoupon>): Promise<Coupon | undefined> {
     const [coupon] = await db.update(coupons).set(data).where(eq(coupons.id, id)).returning();
     return coupon || undefined;
+  }
+
+  // Homepage content methods
+  async getHomepageContent(): Promise<HomepageContent | undefined> {
+    const [content] = await db.select().from(homepageContent).limit(1);
+    return content || undefined;
+  }
+
+  async updateHomepageContent(data: InsertHomepageContent): Promise<HomepageContent> {
+    const existing = await this.getHomepageContent();
+    
+    if (existing) {
+      const [updated] = await db.update(homepageContent)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(homepageContent.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db.insert(homepageContent).values(data).returning();
+      return created;
+    }
   }
 
   // Admin statistics

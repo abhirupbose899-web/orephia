@@ -14,6 +14,7 @@ import {
   insertOrderSchema,
   insertAddressSchema,
   insertCouponSchema,
+  insertHomepageContentSchema,
   addToCartSchema
 } from "@shared/schema";
 
@@ -634,6 +635,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Coupon not found" });
       }
       res.json(coupon);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Homepage content routes
+  app.get("/api/homepage", async (req, res) => {
+    try {
+      const content = await storage.getHomepageContent();
+      res.json(content || {
+        heroTitle: null,
+        heroSubtitle: null,
+        heroImage: null,
+        featuredProductIds: [],
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/admin/homepage", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = insertHomepageContentSchema.parse(req.body);
+      const content = await storage.updateHomepageContent(validatedData);
+      res.json(content);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
