@@ -51,7 +51,7 @@ export default function HomePage() {
             <Star className="mr-2 h-3 w-3 fill-primary" />
             Luxury Fashion Redefined
           </Badge>
-          <h1 className="font-serif text-6xl md:text-7xl lg:text-8xl font-bold mb-8 leading-tight whitespace-pre-line bg-gradient-to-br from-[#FFD700] via-[#D4AF37] to-[#F4E5C2] bg-clip-text text-transparent drop-shadow-2xl [text-shadow:_0_2px_20px_rgba(212,175,55,0.7)]" data-testid="text-hero-title">
+          <h1 className="font-serif text-6xl md:text-7xl lg:text-8xl font-bold mb-8 leading-tight whitespace-pre-line bg-gradient-to-br from-white via-[#F5E6E8] to-[#E8C4C8] bg-clip-text text-transparent drop-shadow-2xl [text-shadow:_0_2px_20px_rgba(255,255,255,0.5)]" data-testid="text-hero-title">
             {heroTitle}
           </h1>
           <p className="text-xl md:text-2xl text-white/95 mb-12 max-w-3xl mx-auto drop-shadow-lg font-light">
