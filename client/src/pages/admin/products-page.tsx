@@ -21,6 +21,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Pencil, Trash2, Package } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -49,6 +50,7 @@ export default function AdminProductsPage() {
       sizes: "",
       colors: "",
       tags: "",
+      newArrival: false,
     },
   });
 
@@ -128,6 +130,7 @@ export default function AdminProductsPage() {
       sizes: "",
       colors: "",
       tags: "",
+      newArrival: false,
     });
     setDialogOpen(true);
   };
@@ -147,6 +150,7 @@ export default function AdminProductsPage() {
       sizes: product.sizes?.join(", ") || "",
       colors: product.colors?.join(", ") || "",
       tags: product.tags?.join(", ") || "",
+      newArrival: product.newArrival || false,
     });
     setDialogOpen(true);
   };
@@ -164,6 +168,7 @@ export default function AdminProductsPage() {
       sizes: formData.sizes ? formData.sizes.split(",").map((s: string) => s.trim()) : [],
       colors: formData.colors ? formData.colors.split(",").map((s: string) => s.trim()) : [],
       tags: formData.tags ? formData.tags.split(",").map((s: string) => s.trim()) : [],
+      newArrival: formData.newArrival || false,
     };
 
     if (isCreating) {
@@ -356,6 +361,17 @@ export default function AdminProductsPage() {
             <div>
               <Label htmlFor="tags">Tags (comma-separated)</Label>
               <Input {...form.register("tags")} id="tags" placeholder="casual, formal, summer" data-testid="input-tags" />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="newArrival"
+                checked={form.watch("newArrival")}
+                onCheckedChange={(checked) => form.setValue("newArrival", checked as boolean)}
+                data-testid="checkbox-new-arrival"
+              />
+              <Label htmlFor="newArrival" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Mark as New Arrival
+              </Label>
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} data-testid="button-cancel">
