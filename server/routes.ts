@@ -19,6 +19,7 @@ import {
   addToCartSchema,
   insertStyleProfileSchema
 } from "@shared/schema";
+import { registerShopifyCheckoutRoutes } from "./shopify-checkout";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID!,
@@ -39,6 +40,9 @@ function requireAdmin(req: any, res: any, next: any) {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuth(app);
+
+  // Setup Shopify checkout routes
+  registerShopifyCheckoutRoutes(app);
 
   // Product routes
   app.get("/api/products", async (req, res) => {

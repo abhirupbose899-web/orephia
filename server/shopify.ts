@@ -46,7 +46,9 @@ export async function createShopifyCheckout(
   const { data, errors } = await client.request(mutation, { variables });
 
   if (errors || data?.cartCreate?.userErrors?.length > 0) {
-    const errorMessage = errors?.[0]?.message || data?.cartCreate?.userErrors?.[0]?.message || 'Failed to create Shopify checkout';
+    const errorMessage = (errors && Array.isArray(errors) && errors[0]?.message) || 
+                        data?.cartCreate?.userErrors?.[0]?.message || 
+                        'Failed to create Shopify checkout';
     throw new Error(`Shopify Checkout Error: ${errorMessage}`);
   }
 
@@ -133,8 +135,8 @@ export async function getShopifyProducts(first: number = 50) {
 
   const { data, errors } = await client.request(query, { variables });
 
-  if (errors) {
-    throw new Error(`Failed to fetch Shopify products: ${errors[0].message}`);
+  if (errors && Array.isArray(errors) && errors.length > 0) {
+    throw new Error(`Failed to fetch Shopify products: ${errors[0]?.message || 'Unknown error'}`);
   }
 
   return data.products.edges.map((edge: any) => edge.node);
