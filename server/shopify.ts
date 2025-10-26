@@ -1,10 +1,19 @@
 import { createStorefrontApiClient } from '@shopify/storefront-api-client';
 
+// Validate Shopify environment variables
+const SHOPIFY_STORE_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
+const SHOPIFY_STOREFRONT_ACCESS_TOKEN = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
+
+if (!SHOPIFY_STORE_DOMAIN || !SHOPIFY_STOREFRONT_ACCESS_TOKEN) {
+  console.warn("⚠️  Shopify environment variables not configured. Shopify features will not work.");
+  console.warn("   Required: SHOPIFY_STORE_DOMAIN, SHOPIFY_STOREFRONT_ACCESS_TOKEN");
+}
+
 // Initialize Shopify Storefront API client
 const client = createStorefrontApiClient({
-  storeDomain: process.env.SHOPIFY_STORE_DOMAIN || '',
+  storeDomain: SHOPIFY_STORE_DOMAIN || 'placeholder.myshopify.com',
   apiVersion: '2025-01',
-  publicAccessToken: process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN || '',
+  publicAccessToken: SHOPIFY_STOREFRONT_ACCESS_TOKEN || 'placeholder',
 });
 
 export interface ShopifyCartLine {
