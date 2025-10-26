@@ -112,8 +112,21 @@ Preferred communication style: Simple, everyday language.
 
 ### External Dependencies
 
-**Payment Processing**
-- Razorpay integration for secure payment processing (base currency: INR)
+**Shopify Integration (Dropshipping Model)**
+- Orephia serves as custom frontend while Shopify handles backend product management and checkout
+- Shopify Storefront API integration via @shopify/storefront-api-client library
+- Product sync functionality pulls products from Shopify store (7ehjpp-c6.myshopify.com) into local database
+- Products table includes shopifyProductId and shopifyVariantId fields for mapping
+- Checkout flow redirects customers to Shopify checkout page for payment processing
+- Admin panel includes "Sync from Shopify" button for manual product synchronization
+- API endpoints:
+  - POST /api/admin/shopify/sync - Triggers product sync from Shopify (admin-only)
+  - POST /api/shopify/checkout - Creates Shopify checkout session and redirects to Shopify
+- Environment secrets: SHOPIFY_STORE_DOMAIN, SHOPIFY_STOREFRONT_ACCESS_TOKEN, SHOPIFY_PRIVATE_ACCESS_TOKEN
+
+**Payment Processing (Legacy - Razorpay)**
+- Razorpay integration previously used for payment processing (base currency: INR)
+- Currently replaced by Shopify checkout for payment handling
 - Server-side order creation with trusted product pricing (fetched from database, never client-provided)
 - Payment verification using signature validation with crypto
 - Coupon discounts applied to payment amounts server-side
