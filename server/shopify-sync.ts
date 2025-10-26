@@ -66,23 +66,20 @@ export async function syncProductsFromShopify(): Promise<{
           sizes: sizes.length > 0 ? sizes : ['One Size'],
           colors: colors.length > 0 ? colors : ['Default'],
           tags: shopifyProduct.tags || [],
-          inStock: shopifyProduct.availableForSale,
-          isFeatured: false,
+          stock: primaryVariant.quantityAvailable || 0,
+          featured: false,
           newArrival: false,
           shopifyProductId: shopifyProduct.id,
           shopifyVariantId: primaryVariant.id,
         };
 
         // Check if product already exists (by Shopify ID)
-        const existingProducts = await storage.getAllProducts();
-        const existingProduct = existingProducts.find(
-          (p: any) => p.shopifyProductId === shopifyProduct.id
-        );
+        const existingProduct = await storage.getProductByShopifyId(shopifyProduct.id);
 
         if (existingProduct) {
           // Update existing product
-          console.log(`🔄 Updating: ${shopifyProduct.title}`);
-          // TODO: Implement update logic
+          await storage.updateProduct(existingProduct.id, orephiaProduct);
+          console.log(`🔄 Updated: ${shopifyProduct.title}`);
           results.updated++;
         } else {
           // Create new product

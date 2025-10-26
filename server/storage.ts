@@ -50,6 +50,7 @@ export interface IStorage {
   // Product methods
   getAllProducts(): Promise<Product[]>;
   getProduct(id: string): Promise<Product | undefined>;
+  getProductByShopifyId(shopifyProductId: string): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
   searchProducts(query: string, filters?: any): Promise<Product[]>;
   updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined>;
@@ -147,6 +148,11 @@ export class DatabaseStorage implements IStorage {
 
   async getProduct(id: string): Promise<Product | undefined> {
     const [product] = await db.select().from(products).where(eq(products.id, id));
+    return product || undefined;
+  }
+
+  async getProductByShopifyId(shopifyProductId: string): Promise<Product | undefined> {
+    const [product] = await db.select().from(products).where(eq(products.shopifyProductId, shopifyProductId));
     return product || undefined;
   }
 
