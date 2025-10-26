@@ -1,6 +1,5 @@
 import { getShopifyProducts } from "./shopify";
 import { storage } from "./storage";
-import type { InsertProduct } from "@shared/schema";
 
 /**
  * Sync products from Shopify to Orephia database
@@ -56,7 +55,7 @@ export async function syncProductsFromShopify(): Promise<{
         });
 
         // Map Shopify product to Orephia product format
-        const orephiaProduct: InsertProduct = {
+        const orephiaProduct = {
           title: shopifyProduct.title,
           description: shopifyProduct.description || '',
           price: primaryVariant.price.amount,

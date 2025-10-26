@@ -33,7 +33,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pencil, Trash2, Package, Search, Sparkles, Filter } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Search, Sparkles, Filter, RefreshCw } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
@@ -114,6 +114,27 @@ export default function AdminProductsPage() {
     },
     onError: () => {
       toast({ title: "Failed to delete product", variant: "destructive" });
+    },
+  });
+
+  const syncShopifyMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/admin/shopify/sync", {});
+    },
+    onSuccess: async (data: any) => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/admin/stats"] });
+      toast({ 
+        title: "Shopify sync completed", 
+        description: `Synced: ${data.results.synced}, Updated: ${data.results.updated}` 
+      });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Shopify sync failed", 
+        description: error.message || "Failed to sync products from Shopify",
+        variant: "destructive" 
+      });
     },
   });
 
@@ -275,10 +296,21 @@ export default function AdminProductsPage() {
               <p className="text-muted-foreground">Manage your product catalog</p>
             </div>
           </div>
-          <Button onClick={handleCreate} data-testid="button-add-product" className="bg-gradient-to-r from-primary to-accent hover:opacity-90">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Product
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => syncShopifyMutation.mutate()} 
+              disabled={syncShopifyMutation.isPending}
+              variant="outline"
+              data-testid="button-sync-shopify"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${syncShopifyMutation.isPending ? 'animate-spin' : ''}`} />
+              {syncShopifyMutation.isPending ? 'Syncing...' : 'Sync from Shopify'}
+            </Button>
+            <Button onClick={handleCreate} data-testid="button-add-product" className="bg-gradient-to-r from-primary to-accent hover:opacity-90">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Product
+            </Button>
+          </div>
         </div>
         
         {/* Stats Cards */}
