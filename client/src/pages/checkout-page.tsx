@@ -11,13 +11,7 @@ import { Price } from "@/components/price";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
-import { Loader2, CheckCircle, Gift } from "lucide-react";
-
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
+import { Loader2, CheckCircle, Gift, ShoppingBag } from "lucide-react";
 
 export default function CheckoutPage() {
   const { cart, clearCart } = useCart();
@@ -151,7 +145,7 @@ export default function CheckoutPage() {
     },
   });
 
-  const handlePayment = async () => {
+  const handleShopifyCheckout = async () => {
     try {
       setProcessingPayment(true);
 
@@ -176,70 +170,12 @@ export default function CheckoutPage() {
         color: item.color,
       }));
 
-      const res = await apiRequest("POST", "/api/razorpay/create-order", {
-        items,
-        addressId: selectedAddressId,
-        couponCode: appliedCoupon?.code || null,
-        pointsRedeemed: pointsApplied,
-      });
-
+      // Create Shopify checkout
+      const res = await apiRequest("POST", "/api/shopify/checkout", { items });
       const data = await res.json();
 
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: data.amount,
-        currency: data.currency,
-        name: "Orephia",
-        description: "Luxury Fashion Purchase",
-        order_id: data.orderId,
-        handler: async function (response: any) {
-          try {
-            const verifyRes = await apiRequest("POST", "/api/razorpay/verify-payment", {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            });
-
-            const verifyData = await verifyRes.json();
-
-            if (verifyData.success) {
-              await createOrderMutation.mutateAsync({
-                paymentId: response.razorpay_payment_id,
-                razorpayOrderId: response.razorpay_order_id,
-              });
-            } else {
-              throw new Error("Payment verification failed");
-            }
-          } catch (error: any) {
-            toast({
-              title: "Payment verification failed",
-              description: error.message,
-              variant: "destructive",
-            });
-            setProcessingPayment(false);
-          }
-        },
-        prefill: {
-          name: addressToUse.fullName,
-          contact: addressToUse.phone,
-        },
-        theme: {
-          color: "#000000",
-        },
-        modal: {
-          ondismiss: function() {
-            setProcessingPayment(false);
-            toast({
-              title: "Payment Cancelled",
-              description: "You cancelled the payment process",
-              variant: "destructive",
-            });
-          }
-        }
-      };
-
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
+      // Redirect to Shopify checkout URL
+      window.location.href = data.checkoutUrl;
     } catch (error: any) {
       toast({
         title: "Payment Failed",
@@ -515,7 +451,7 @@ export default function CheckoutPage() {
                     Back
                   </Button>
                   <Button
-                    onClick={handlePayment}
+                    onClick={handleShopifyCheckout}
                     disabled={processingPayment || createOrderMutation.isPending}
                     className="flex-1"
                     data-testid="button-place-order"
@@ -523,10 +459,13 @@ export default function CheckoutPage() {
                     {processingPayment || createOrderMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
+                        Redirecting to Shopify...
                       </>
                     ) : (
-                      "Proceed to Payment"
+                      <>
+                        <ShoppingBag className="mr-2 h-4 w-4" />
+                        Proceed to Shopify Checkout
+                      </>
                     )}
                   </Button>
                 </div>
