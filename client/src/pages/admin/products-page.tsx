@@ -119,7 +119,8 @@ export default function AdminProductsPage() {
 
   const syncShopifyMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/admin/shopify/sync", {});
+      const res = await apiRequest("POST", "/api/admin/shopify/sync", {});
+      return await res.json();
     },
     onSuccess: async (data: any) => {
       await queryClient.invalidateQueries({ queryKey: ["/api/products"] });
