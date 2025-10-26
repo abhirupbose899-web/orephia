@@ -35,7 +35,7 @@ export function registerShopifyCheckoutRoutes(app: Express) {
 
         // Map Orephia product to Shopify variant ID
         const shopifyVariantId = mapOrephiaProductToShopifyVariant(
-          item.productId,
+          product,
           item.size,
           item.color
         );

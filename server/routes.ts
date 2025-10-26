@@ -20,6 +20,7 @@ import {
   insertStyleProfileSchema
 } from "@shared/schema";
 import { registerShopifyCheckoutRoutes } from "./shopify-checkout";
+import { syncProductsFromShopify } from "./shopify-sync";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID!,
@@ -736,6 +737,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin routes - Protected by requireAdmin middleware
+  
+  // Admin: Sync products from Shopify
+  app.post("/api/admin/shopify/sync", requireAdmin, async (req, res) => {
+    try {
+      console.log("🔄 Starting Shopify product sync...");
+      const results = await syncProductsFromShopify();
+      res.json({
+        success: true,
+        message: "Shopify sync completed",
+        results,
+      });
+    } catch (error: any) {
+      console.error("Shopify sync error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Shopify sync failed", 
+        error: error.message 
+      });
+    }
+  });
   
   // Admin: Get all orders with filtering
   app.get("/api/admin/orders", requireAdmin, async (req, res) => {

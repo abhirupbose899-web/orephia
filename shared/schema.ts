@@ -44,6 +44,8 @@ export const products = pgTable("products", {
   tags: jsonb("tags").$type<string[]>(),
   featured: boolean("featured").default(false),
   newArrival: boolean("new_arrival").default(false),
+  shopifyProductId: text("shopify_product_id"),
+  shopifyVariantId: text("shopify_variant_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

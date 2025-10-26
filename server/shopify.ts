@@ -59,23 +59,24 @@ export async function createShopifyCheckout(
 }
 
 /**
- * Map Orephia product variant to Shopify product variant ID
- * This requires matching products between Orephia database and Shopify store
+ * Map Orephia product to Shopify variant ID
+ * Uses stored shopifyVariantId from database
  */
 export function mapOrephiaProductToShopifyVariant(
-  productId: string,
+  product: any,
   size?: string,
   color?: string
 ): string {
-  // TODO: Implement mapping logic based on your Shopify product setup
-  // For now, this is a placeholder that needs to be configured
-  // You'll need to store Shopify variant IDs in your database or use SKU matching
+  // If product has a stored Shopify variant ID, use it
+  if (product.shopifyVariantId) {
+    return product.shopifyVariantId;
+  }
   
-  // Example format: gid://shopify/ProductVariant/123456789
-  // This should be replaced with actual mapping from your Shopify store
-  console.warn('⚠️  Shopify product mapping not yet configured. Please map Orephia products to Shopify variants.');
+  // Fallback: log warning if no Shopify ID is found
+  console.warn(`⚠️  Product "${product.title}" (${product.id}) has no Shopify variant ID. Please sync products from Shopify.`);
   
-  return `gid://shopify/ProductVariant/${productId}`;
+  // Return a placeholder - this will likely fail at checkout
+  return `gid://shopify/ProductVariant/UNKNOWN`;
 }
 
 /**
