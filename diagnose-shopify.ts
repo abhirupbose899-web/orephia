@@ -44,8 +44,6 @@ async function testStorefrontAPI() {
               title
               handle
               availableForSale
-              status
-              publishedAt
             }
           }
         }
@@ -64,8 +62,8 @@ async function testStorefrontAPI() {
         const p = edge.node;
         console.log(`   ${i + 1}. ${p.title}`);
         console.log(`      ID: ${p.id}`);
-        console.log(`      Available: ${p.availableForSale}`);
-        console.log(`      Published: ${p.publishedAt || 'Not published'}`);
+        console.log(`      Handle: ${p.handle}`);
+        console.log(`      Available for sale: ${p.availableForSale}`);
       });
     } else {
       console.log(`\n   ⚠️  No products found via Storefront API`);
