@@ -14,6 +14,7 @@ import { AdminLayout } from "@/components/admin-layout";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import ShopPage from "@/pages/shop-page";
+import SearchPage from "@/pages/search-page";
 import ProductDetailPage from "@/pages/product-detail-page";
 import CartPage from "@/pages/cart-page";
 import WishlistPage from "@/pages/wishlist-page";
@@ -44,6 +45,7 @@ function Router() {
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/shop" component={ShopPage} />
+      <Route path="/search" component={SearchPage} />
       <Route path="/product/:id" component={ProductDetailPage} />
       <Route path="/cart" component={CartPage} />
       <Route path="/collections" component={CollectionsPage} />
