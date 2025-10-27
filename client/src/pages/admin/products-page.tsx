@@ -157,7 +157,12 @@ export default function AdminProductsPage() {
 
   const updateProductMutation = useMutation({
     mutationFn: async (data: { id: string; updates: any }) => {
-      return await apiRequest("PATCH", `/api/admin/products/${data.id}`, data.updates);
+      const response = await apiRequest("PATCH", `/api/admin/products/${data.id}`, data.updates);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update product');
+      }
+      return await response.json();
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["/api/products"] });
@@ -166,8 +171,12 @@ export default function AdminProductsPage() {
       setDialogOpen(false);
       setEditingProduct(null);
     },
-    onError: () => {
-      toast({ title: "Failed to update product", variant: "destructive" });
+    onError: (error: Error) => {
+      toast({ 
+        title: "Failed to update product", 
+        description: error.message,
+        variant: "destructive" 
+      });
     },
   });
 
@@ -217,15 +226,35 @@ export default function AdminProductsPage() {
   };
 
   const handleSave = (formData: any) => {
+    // Validate required fields
+    if (!formData.title || !formData.description || !formData.price) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields (title, description, price)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const priceValue = parseFloat(formData.price);
+    if (isNaN(priceValue) || priceValue <= 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid price",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const productData = {
-      title: formData.title,
-      description: formData.description,
-      price: parseFloat(formData.price),
-      stock: formData.stock,
+      title: formData.title.trim(),
+      description: formData.description.trim(),
+      price: priceValue.toString(), // Send as string for decimal type
+      stock: parseInt(formData.stock) || 0,
       category: formData.mainCategory || 'Uncategorized', // Required field
-      mainCategory: formData.mainCategory,
+      mainCategory: formData.mainCategory || 'Uncategorized',
       subCategory: formData.subCategory || null,
-      designer: formData.designer || null,
+      designer: formData.designer?.trim() || null,
       images: formData.images ? formData.images.split(",").map((s: string) => s.trim()).filter((s: string) => s) : [],
       sizes: formData.sizes ? formData.sizes.split(",").map((s: string) => s.trim()).filter((s: string) => s) : [],
       colors: formData.colors ? formData.colors.split(",").map((s: string) => s.trim()).filter((s: string) => s) : [],

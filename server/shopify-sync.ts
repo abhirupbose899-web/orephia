@@ -69,21 +69,75 @@ export async function syncProductsFromShopify(): Promise<{
         });
 
         // Map Shopify product to Orephia product format
+        // Get ALL images from product
         const imageUrls = images.map((img: any) => img.node.url);
+        
+        // Also check if variants have unique images
+        variants.forEach((variant: any) => {
+          if (variant.node.image?.url && !imageUrls.includes(variant.node.image.url)) {
+            imageUrls.push(variant.node.image.url);
+          }
+        });
+        
+        // Parse description and handle rich text
+        const description = shopifyProduct.description || 'No description available';
+        
+        // Determine category from vendor or tags
+        const vendor = shopifyProduct.vendor || '';
+        const productTags = shopifyProduct.tags || [];
+        let mainCategory = 'Apparels'; // Default
+        let subCategory = null;
+        
+        // Try to extract category from tags
+        const categoryTags = productTags.filter((tag: string) => 
+          tag.toLowerCase().includes('dress') || 
+          tag.toLowerCase().includes('skirt') || 
+          tag.toLowerCase().includes('blazer') || 
+          tag.toLowerCase().includes('jacket') ||
+          tag.toLowerCase().includes('shirt') ||
+          tag.toLowerCase().includes('accessories') ||
+          tag.toLowerCase().includes('shoes') ||
+          tag.toLowerCase().includes('bags')
+        );
+        
+        if (categoryTags.length > 0) {
+          const firstTag = categoryTags[0].toLowerCase();
+          if (firstTag.includes('dress')) {
+            mainCategory = 'Apparels';
+            subCategory = 'Dresses';
+          } else if (firstTag.includes('skirt')) {
+            mainCategory = 'Apparels';
+            subCategory = 'Skirts';
+          } else if (firstTag.includes('blazer')) {
+            mainCategory = 'Apparels';
+            subCategory = 'Blazers';
+          } else if (firstTag.includes('jacket')) {
+            mainCategory = 'Apparels';
+            subCategory = 'Jackets';
+          } else if (firstTag.includes('accessories')) {
+            mainCategory = 'Accessories';
+          } else if (firstTag.includes('shoes')) {
+            mainCategory = 'Shoes';
+          } else if (firstTag.includes('bags')) {
+            mainCategory = 'Bags';
+          }
+        }
+        
         const orephiaProduct = {
           title: shopifyProduct.title,
-          description: shopifyProduct.description || 'No description available',
+          description: description,
           price: primaryVariant.price.amount,
           images: imageUrls.length > 0 ? imageUrls : ['https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=800&h=1200&fit=crop'],
-          category: shopifyProduct.vendor || 'Uncategorized',
-          mainCategory: 'Apparels', // Default, can be customized
-          subCategory: null,
+          category: vendor || mainCategory,
+          mainCategory: mainCategory,
+          subCategory: subCategory,
+          designer: vendor || null,
           sizes: sizes.length > 0 ? sizes : ['One Size'],
           colors: colors.length > 0 ? colors : ['Default'],
-          tags: shopifyProduct.tags || [],
+          tags: productTags,
           stock: primaryVariant.quantityAvailable || 0,
           featured: false,
-          newArrival: false,
+          newArrival: shopifyProduct.tags?.some((tag: string) => tag.toLowerCase().includes('new')) || false,
           shopifyProductId: shopifyProduct.id,
           shopifyVariantId: primaryVariant.id,
         };

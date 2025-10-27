@@ -24,15 +24,7 @@ export default function CheckoutPage() {
   const [pointsToRedeem, setPointsToRedeem] = useState<number>(0);
   const [pointsApplied, setPointsApplied] = useState<number>(0);
 
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    document.body.appendChild(script);
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
+  // Removed Razorpay script - using Shopify checkout instead
 
   useEffect(() => {
     const savedCoupon = localStorage.getItem("appliedCoupon");
@@ -71,52 +63,12 @@ export default function CheckoutPage() {
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
 
   const createOrderMutation = useMutation({
-    mutationFn: async (paymentDetails?: { paymentId: string; razorpayOrderId: string }) => {
-      const items = cart.map((item) => {
-        const product = products.find((p) => p.id === item.productId);
-        if (!product) throw new Error("Product not found");
-        const price = typeof product.price === "string" ? parseFloat(product.price) : product.price;
-        const images = Array.isArray(product.images) ? product.images : [];
-        return {
-          productId: item.productId,
-          productTitle: product.title,
-          productImage: images[0] || "",
-          quantity: item.quantity,
-          size: item.size,
-          color: item.color,
-          price,
-        };
-      });
-
-      const addressToUse = selectedAddressId
-        ? addresses.find((a) => a.id === selectedAddressId)
-        : shippingAddress;
-
-      const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const discount = appliedCoupon ? parseFloat(appliedCoupon.discountAmount) : 0;
-      const shipping = subtotal > 100 ? 0 : 10;
-      const tax = (subtotal - discount) * 0.08;
-      const total = subtotal - discount + shipping + tax;
-
-      const orderPayload: any = {
-        items,
-        shippingAddress: addressToUse,
-        subtotal: subtotal.toFixed(2),
-        discount: discount.toFixed(2),
-        shipping: shipping.toFixed(2),
-        tax: tax.toFixed(2),
-        total: total.toFixed(2),
-        status: paymentDetails ? "confirmed" : "pending",
-        couponCode: appliedCoupon?.code || null,
-        pointsRedeemed: pointsApplied,
-      };
-
-      if (paymentDetails) {
-        orderPayload.paymentId = paymentDetails.paymentId;
-        orderPayload.razorpayOrderId = paymentDetails.razorpayOrderId;
+    mutationFn: async (orderData: any) => {
+      const res = await apiRequest("POST", "/api/orders", orderData);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to create order');
       }
-
-      const res = await apiRequest("POST", "/api/orders", orderPayload);
       return await res.json();
     },
     onSuccess: async () => {
@@ -125,23 +77,15 @@ export default function CheckoutPage() {
         queryClient.invalidateQueries({ queryKey: ["/api/loyalty/balance"] });
         queryClient.invalidateQueries({ queryKey: ["/api/loyalty/transactions"] });
       }
-      
-      clearCart();
-      localStorage.removeItem("appliedCoupon");
-      setOrderPlaced(true);
-      setProcessingPayment(false);
-      toast({
-        title: "Order placed successfully!",
-        description: "You will receive a confirmation email shortly.",
-      });
     },
     onError: (error: Error) => {
-      setProcessingPayment(false);
+      console.error("Order creation error:", error);
       toast({
-        title: "Order failed",
+        title: "Order Failed",
         description: error.message,
         variant: "destructive",
       });
+      setProcessingPayment(false);
     },
   });
 
@@ -163,23 +107,80 @@ export default function CheckoutPage() {
         return;
       }
 
-      const items = cart.map((item) => ({
+      // Prepare order items with product details
+      const items = cart.map((item) => {
+        const product = products.find((p) => p.id === item.productId);
+        if (!product) throw new Error("Product not found");
+        const price = typeof product.price === "string" ? parseFloat(product.price) : product.price;
+        const images = Array.isArray(product.images) ? product.images : [];
+        return {
+          productId: item.productId,
+          productTitle: product.title,
+          productImage: images[0] || "",
+          quantity: item.quantity,
+          size: item.size,
+          color: item.color,
+          price,
+        };
+      });
+
+      // Calculate totals
+      const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const discount = appliedCoupon ? parseFloat(appliedCoupon.discountAmount) : 0;
+      const pointsDiscount = pointsApplied / 100;
+      const shipping = subtotal > 100 ? 0 : 10;
+      const tax = (subtotal - discount - pointsDiscount) * 0.08;
+      const total = subtotal - discount - pointsDiscount + shipping + tax;
+
+      // Create order in our system first (for tracking/history/admin)
+      const orderPayload = {
+        items,
+        shippingAddress: addressToUse,
+        subtotal: subtotal.toFixed(2),
+        discount: discount.toFixed(2),
+        shipping: shipping.toFixed(2),
+        tax: tax.toFixed(2),
+        total: total.toFixed(2),
+        status: "pending_shopify", // Order pending Shopify payment
+        couponCode: appliedCoupon?.code || null,
+        pointsRedeemed: pointsApplied,
+      };
+
+      // Create order record (this will also handle loyalty point redemption)
+      const order = await createOrderMutation.mutateAsync(orderPayload);
+
+      // Now create Shopify checkout
+      const shopifyItems = cart.map((item) => ({
         productId: item.productId,
         quantity: item.quantity,
         size: item.size,
         color: item.color,
       }));
 
-      // Create Shopify checkout
-      const res = await apiRequest("POST", "/api/shopify/checkout", { items });
+      const res = await apiRequest("POST", "/api/shopify/checkout", { items: shopifyItems });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to create checkout");
+      }
+      
       const data = await res.json();
 
-      // Redirect to Shopify checkout URL
+      if (!data.checkoutUrl) {
+        throw new Error("No checkout URL received from Shopify");
+      }
+
+      // Clear cart and redirect to Shopify checkout
+      clearCart();
+      localStorage.removeItem("appliedCoupon");
+      
+      // Redirect to Shopify's secure checkout page
       window.location.href = data.checkoutUrl;
     } catch (error: any) {
+      console.error("Shopify checkout error:", error);
       toast({
-        title: "Payment Failed",
-        description: error.message || "Failed to initiate payment",
+        title: "Checkout Failed",
+        description: error.message || "Failed to initiate Shopify checkout. Please try again.",
         variant: "destructive",
       });
       setProcessingPayment(false);
@@ -405,19 +406,24 @@ export default function CheckoutPage() {
               <Card className="p-6">
                 <h2 className="font-semibold text-lg mb-6">Payment Method</h2>
                 <div className="space-y-4 mb-6">
-                  <div className="border rounded-lg p-4">
+                  <div className="border rounded-lg p-4 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-12 h-8 bg-primary/10 rounded flex items-center justify-center">
-                        <span className="text-xs font-bold">RP</span>
+                        <ShoppingBag className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <p className="font-medium">Razorpay Payment Gateway</p>
-                        <p className="text-xs text-muted-foreground">Secure payment processing</p>
+                        <p className="font-medium">Shopify Secure Checkout</p>
+                        <p className="text-xs text-muted-foreground">Powered by Shopify Payments</p>
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground mt-3">
-                      You will be redirected to Razorpay to complete your payment securely. We accept credit/debit cards, UPI, net banking, and wallets.
+                      You will be redirected to Shopify's secure checkout page to complete your payment. We accept all major credit/debit cards, Apple Pay, Google Pay, and more.
                     </p>
+                    <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                      <p className="text-xs text-muted-foreground">
+                        <strong className="text-foreground">How it works:</strong> When you click "Proceed to Shopify Checkout", you'll be redirected to Shopify's secure payment page where you can complete your purchase. Shopify will handle payment processing and order fulfillment.
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <div className="flex gap-4">
@@ -452,11 +458,11 @@ export default function CheckoutPage() {
                   </Button>
                   <Button
                     onClick={handleShopifyCheckout}
-                    disabled={processingPayment || createOrderMutation.isPending}
-                    className="flex-1"
+                    disabled={processingPayment}
+                    className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90"
                     data-testid="button-place-order"
                   >
-                    {processingPayment || createOrderMutation.isPending ? (
+                    {processingPayment ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Redirecting to Shopify...

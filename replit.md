@@ -32,6 +32,16 @@ Preferred communication style: Simple, everyday language.
   - Added preflight OPTIONS request handling for mobile apps
   - Fixed product update bug where missing category field caused failures
 
+- **Shopify Integration Enhancements**:
+  - Removed Razorpay payment integration completely - now using Shopify checkout exclusively
+  - Enhanced Shopify product sync to capture ALL product media (including variant-specific images)
+  - Intelligent category detection from product tags for better organization
+  - Auto-detection of "new arrival" status from Shopify product tags
+  - Improved designer/vendor mapping from Shopify data
+  - Fixed admin panel product update validation with better error handling
+  - Added comprehensive logging for debugging product updates and sync operations
+  - Checkout flow now redirects directly to Shopify's secure checkout page
+
 ## System Architecture
 
 ### Frontend Architecture
@@ -154,13 +164,15 @@ Preferred communication style: Simple, everyday language.
   - POST /api/shopify/checkout - Creates Shopify checkout session and redirects to Shopify
 - Environment secrets: SHOPIFY_STORE_DOMAIN, SHOPIFY_STOREFRONT_ACCESS_TOKEN, SHOPIFY_PRIVATE_ACCESS_TOKEN
 
-**Payment Processing (Legacy - Razorpay)**
-- Razorpay integration previously used for payment processing (base currency: INR)
-- Currently replaced by Shopify checkout for payment handling
-- Server-side order creation with trusted product pricing (fetched from database, never client-provided)
-- Payment verification using signature validation with crypto
-- Coupon discounts applied to payment amounts server-side
-- Support for both test and production environments via environment variables
+**Payment Processing (Shopify Checkout)**
+- Primary payment method: Shopify checkout redirect
+- Checkout flow redirects customers directly to Shopify's secure checkout page
+- Shopify handles all payment processing, order creation, and fulfillment
+- Supports all Shopify payment methods (credit/debit cards, Apple Pay, Google Pay, etc.)
+- No Razorpay integration - completely replaced by Shopify
+- Cart items are sent to Shopify with product variant IDs for accurate checkout
+- Customers complete purchase on Shopify, then receive confirmation from Shopify
+- API endpoint: POST /api/shopify/checkout - Creates Shopify cart and returns checkout URL
 
 **Multi-Currency Support**
 - Dynamic currency conversion using Open Exchange Rates API with free tier (no API key required)

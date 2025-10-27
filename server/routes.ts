@@ -5,7 +5,7 @@ import { setupAuth } from "./auth";
 import { getStyleRecommendations, getStyleJourneyRecommendations } from "./openai";
 import Razorpay from "razorpay";
 import crypto from "crypto";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "./db";
 import { coupons } from "@shared/schema";
 import { 
@@ -22,10 +22,17 @@ import {
 import { registerShopifyCheckoutRoutes } from "./shopify-checkout";
 import { syncProductsFromShopify } from "./shopify-sync";
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
+// Razorpay is optional now - using Shopify checkout as primary payment method
+let razorpay: Razorpay | null = null;
+if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+  razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+  console.log("✓ Razorpay initialized (optional - Shopify is primary payment method)");
+} else {
+  console.log("ℹ Razorpay not configured - using Shopify checkout only");
+}
 
 // Middleware to check if user is admin
 function requireAdmin(req: any, res: any, next: any) {
@@ -306,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             req.user!.id,
             actualPointsRedeemed,
             `Redeemed for order`,
-            null
+            undefined
           );
           if (!redeemed) {
             return res.status(400).json({ message: "Failed to redeem loyalty points" });
@@ -337,7 +344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               req.user!.id,
               actualPointsRedeemed,
               "Refund - order creation failed",
-              null
+              undefined
             );
             // Delete the failed redemption transaction
             await db.execute(sql`
@@ -366,8 +373,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Award loyalty points if payment is successful
-      if (status === "paid") {
+      // Award loyalty points if payment is successful or order is created for Shopify
+      if (status === "paid" || status === "pending_shopify") {
         try {
           await storage.addLoyaltyPoints(
             req.user!.id,
@@ -597,6 +604,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       };
 
+      if (!razorpay) {
+        throw new Error("Razorpay is not configured");
+      }
       const razorpayOrder = await razorpay.orders.create(options);
       
       res.json({
@@ -806,13 +816,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Update product
   app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
     try {
+      console.log(`[Admin] Updating product ${req.params.id} with data:`, JSON.stringify(req.body, null, 2));
+      
       const validatedData = insertProductSchema.partial().parse(req.body);
+      
+      console.log(`[Admin] Validated data:`, JSON.stringify(validatedData, null, 2));
+      
       const product = await storage.updateProduct(req.params.id, validatedData);
       if (!product) {
+        console.error(`[Admin] Product ${req.params.id} not found`);
         return res.status(404).json({ message: "Product not found" });
       }
+      
+      console.log(`[Admin] Product ${req.params.id} updated successfully`);
       res.json(product);
     } catch (error: any) {
+      console.error(`[Admin] Error updating product ${req.params.id}:`, error);
       res.status(400).json({ message: error.message });
     }
   });
