@@ -222,13 +222,14 @@ export default function AdminProductsPage() {
       description: formData.description,
       price: parseFloat(formData.price),
       stock: formData.stock,
+      category: formData.mainCategory || 'Uncategorized', // Required field
       mainCategory: formData.mainCategory,
       subCategory: formData.subCategory || null,
       designer: formData.designer || null,
-      images: formData.images ? formData.images.split(",").map((s: string) => s.trim()) : [],
-      sizes: formData.sizes ? formData.sizes.split(",").map((s: string) => s.trim()) : [],
-      colors: formData.colors ? formData.colors.split(",").map((s: string) => s.trim()) : [],
-      tags: formData.tags ? formData.tags.split(",").map((s: string) => s.trim()) : [],
+      images: formData.images ? formData.images.split(",").map((s: string) => s.trim()).filter((s: string) => s) : [],
+      sizes: formData.sizes ? formData.sizes.split(",").map((s: string) => s.trim()).filter((s: string) => s) : [],
+      colors: formData.colors ? formData.colors.split(",").map((s: string) => s.trim()).filter((s: string) => s) : [],
+      tags: formData.tags ? formData.tags.split(",").map((s: string) => s.trim()).filter((s: string) => s) : [],
       newArrival: formData.newArrival || false,
     };
 
