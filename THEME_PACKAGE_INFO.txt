@@ -1,0 +1,147 @@
+╔═══════════════════════════════════════════════════════════════════╗
+║                   OREPHIA THEME PACKAGE v1.0.0                    ║
+║              Luxury Women's Fashion E-Commerce Theme              ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+📦 FILE LOCATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+File: orephia-theme.tar.gz
+Size: 40 KB
+Location: /home/runner/workspace/orephia-theme.tar.gz
+
+🎨 THEME COLORS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Primary (Rose Gold): #B76E79
+Accent (Wine Red):   #722F37
+Background:          #FFFFFF
+Foreground:          #1A1A1A
+
+✨ FONTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Headings: Playfair Display (Serif) - Editorial sophistication
+Body:     Poppins (Sans-serif) - Modern readability
+
+📂 PACKAGE CONTENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📄 Documentation Files:
+  ✓ README.md              - Overview & quick start guide
+  ✓ INSTALLATION.md        - Step-by-step setup instructions
+  ✓ CONTENTS.md            - Detailed package contents
+  ✓ design_guidelines.md   - Complete design system spec
+
+⚙️ Configuration Files:
+  ✓ tailwind.config.ts     - Tailwind CSS with custom colors
+  ✓ postcss.config.mjs     - PostCSS configuration
+  ✓ index.css              - CSS custom properties & global styles
+  ✓ package.json           - Dependencies metadata
+
+🧩 Components (60+ UI Components):
+  ✓ Layout: Card, Sidebar, Separator, Sheet, Tabs, Resizable
+  ✓ Forms: Button, Input, Select, Checkbox, Radio, Switch, Slider
+  ✓ Navigation: Dropdown Menu, Navigation Menu, Breadcrumb
+  ✓ Feedback: Alert, Dialog, Toast, Progress
+  ✓ Data: Table, Avatar, Badge, Skeleton, Chart
+  ✓ Overlays: Modal, Popover, Tooltip, Drawer
+  ✓ Interactive: Accordion, Carousel, Calendar, Command
+  ✓ And many more...
+
+🛠️ Utilities:
+  ✓ lib/utils.ts           - Tailwind class utilities (cn function)
+  ✓ hooks/use-toast.ts     - Toast notification hook
+  ✓ hooks/use-mobile.tsx   - Mobile detection hook
+
+🎯 KEY FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ 60+ Pre-built Production-Ready Components
+✅ Full Dark Mode Support
+✅ Fully Responsive & Mobile-First
+✅ ARIA-Compliant Accessibility (Radix UI)
+✅ Complete TypeScript Support
+✅ Customizable with Tailwind Utilities
+✅ Consistent Spacing & Color System
+✅ Premium Luxury Fashion Aesthetic
+✅ Performance Optimized & Tree-Shakeable
+
+📦 HOW TO EXTRACT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+tar -xzf orephia-theme.tar.gz
+
+This will create a folder: orephia-theme/
+
+🚀 QUICK START
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Extract the archive
+2. Read INSTALLATION.md for detailed setup steps
+3. Install required npm packages (listed in package.json)
+4. Copy files to your React/TypeScript project
+5. Setup path aliases (@/* → ./src/*)
+6. Import components and start building!
+
+📚 COMPONENT USAGE EXAMPLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+
+function MyComponent() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Welcome to Orephia</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Button variant="default">Shop Now</Button>
+      </CardContent>
+    </Card>
+  )
+}
+
+💡 DESIGN PRINCIPLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Editorial Elegance: Magazine-quality layouts
+• Generous Spacing: Luxury feel with ample whitespace
+• Consistent System: Predefined spacing scale (2,4,6,8,12,16,20,24,32)
+• Gradient Effects: Brand colors throughout UI
+• Premium Typography: Playfair Display + Poppins
+• Accessible: WCAG AA compliant
+
+🔗 DEPENDENCIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Core:
+• React 18+
+• TypeScript
+• Tailwind CSS 3.4+
+• Radix UI components
+• Lucide React (icons)
+• class-variance-authority
+• tailwind-merge
+• clsx
+
+Optional:
+• react-hook-form (forms)
+• zod (validation)
+• date-fns (dates)
+• recharts (charts)
+• embla-carousel-react (carousel)
+• framer-motion (animations)
+
+Full list in package.json and INSTALLATION.md
+
+📖 DOCUMENTATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+After extracting, start with:
+1. README.md - Overview and examples
+2. INSTALLATION.md - Setup guide
+3. design_guidelines.md - Design system details
+
+🌟 ABOUT OREPHIA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Orephia is a luxury women's fashion e-commerce platform featuring:
+• Sophisticated rose-gold (#B76E79) and wine-red (#722F37) palette
+• Editorial-inspired design from premium fashion retailers
+• Complete design system for high-end fashion applications
+• Used in production at orephia.com
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Orephia Theme v1.0.0 - Built with love for luxury fashion
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
