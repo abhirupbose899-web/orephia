@@ -7,6 +7,7 @@ import {
   Tag,
   Home,
   FolderTree,
+  Warehouse,
   LogOut 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       title: "Products",
       href: "/admin/products",
       icon: Package,
+    },
+    {
+      title: "Inventory",
+      href: "/admin/inventory",
+      icon: Warehouse,
     },
     {
       title: "Categories",

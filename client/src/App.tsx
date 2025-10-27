@@ -30,6 +30,7 @@ import LoyaltyPage from "@/pages/loyalty-page";
 import AdminDashboardPage from "@/pages/admin/dashboard-page";
 import AdminHomepagePage from "@/pages/admin/homepage-page";
 import AdminProductsPage from "@/pages/admin/products-page";
+import AdminInventoryPage from "@/pages/admin/inventory-page";
 import AdminCategoriesPage from "@/pages/admin/categories-page";
 import AdminOrdersPage from "@/pages/admin/orders-page";
 import AdminCouponsPage from "@/pages/admin/coupons-page";
@@ -76,6 +77,13 @@ function Router() {
         {() => (<>
           <AdminLayout>
             <AdminProductsPage />
+          </AdminLayout>
+        </>)}
+      </Route>
+      <Route path="/admin/inventory">
+        {() => (<>
+          <AdminLayout>
+            <AdminInventoryPage />
           </AdminLayout>
         </>)}
       </Route>
