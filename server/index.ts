@@ -1,8 +1,32 @@
 import express, { type Request, Response, NextFunction } from "express";
+import cors from "cors";
+import helmet from "helmet";
+import compression from "compression";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+
+// Enable CORS for all origins (allows mobile apps and different networks)
+app.use(cors({
+  origin: true, // Allow all origins
+  credentials: true, // Allow cookies
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+}));
+
+// Security headers for secure networks
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for development (Vite HMR needs it)
+  crossOriginEmbedderPolicy: false, // Allow loading external resources
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin resources
+}));
+
+// Compression for better mobile performance
+app.use(compression());
+
+// Trust proxy for secure networks (important for HTTPS behind proxies)
+app.set('trust proxy', 1);
 
 declare module 'http' {
   interface IncomingMessage {
