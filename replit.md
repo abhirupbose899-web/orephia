@@ -12,6 +12,16 @@ The platform emphasizes editorial elegance inspired by premium fashion retailers
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+### October 27, 2025
+- **Admin Panel Enhancements**: 
+  - Created comprehensive inventory management page (/admin/inventory) with stock tracking, low stock alerts, bulk updates, and inventory analytics dashboard
+  - Enhanced orders page with detailed order view modal showing complete customer information, shipping address, order items with size/color variants, payment details, and order summary including discounts and loyalty points
+  - Added "View" button to each order for opening detailed modal view
+  - Added inventory tracking section to admin navigation sidebar with Warehouse icon
+  - Implemented real-time inventory statistics with color-coded alerts for low stock items
+
 ## System Architecture
 
 ### Frontend Architecture
@@ -41,6 +51,16 @@ Preferred communication style: Simple, everyday language.
 - Centralized API request handling with error boundaries
 - Toast notifications for user feedback on actions
 - Reusable Price component for consistent multi-currency display throughout the app
+- Modal dialogs for detailed data views (order details, product images, etc.)
+
+**Admin Panel Features**
+- Comprehensive product management with CRUD operations and Shopify sync
+- Inventory tracking with stock levels, low stock alerts (threshold: 10 items), and bulk update capabilities
+- Order processing with detailed order views showing customer info, shipping address, order items, payment details, and order timeline
+- Category management for hierarchical product categorization
+- Homepage content management for curated hero section and featured products
+- Coupon management system for discount codes and promotions
+- Analytics dashboard with sales insights and product performance metrics
 
 ### Backend Architecture
 
