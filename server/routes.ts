@@ -39,6 +39,23 @@ function requireAdmin(req: any, res: any, next: any) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint for monitoring and network testing
+  app.get("/health", (_req, res) => {
+    res.status(200).json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  });
+
+  app.get("/api/health", (_req, res) => {
+    res.status(200).json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString() 
+    });
+  });
+
   // Setup authentication routes
   setupAuth(app);
 

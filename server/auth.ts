@@ -44,6 +44,15 @@ export function setupAuth(app: Express) {
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+      httpOnly: true, // Prevent XSS attacks
+      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site in production (for mobile apps)
+      domain: undefined, // Allow any domain (important for different network configurations)
+    },
+    name: 'orephia.sid', // Custom session name
+    rolling: true, // Extend session on each request
   };
 
   app.set("trust proxy", 1);

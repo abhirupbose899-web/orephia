@@ -40,6 +40,27 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: false }));
 
+// Additional headers for mobile and network compatibility
+app.use((req, res, next) => {
+  // Prevent caching issues on mobile networks
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  
+  // Mobile-friendly headers
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  // Handle preflight requests for mobile apps
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+    res.setHeader('Access-Control-Max-Age', '86400'); // Cache preflight for 24 hours
+    return res.sendStatus(204);
+  }
+  
+  next();
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
