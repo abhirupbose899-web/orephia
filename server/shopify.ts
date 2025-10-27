@@ -94,7 +94,7 @@ export function mapOrephiaProductToShopifyVariant(
 export async function getShopifyProducts(first: number = 50) {
   const query = `
     query getProducts($first: Int!) {
-      products(first: $first) {
+      products(first: $first, query: "status:active") {
         edges {
           node {
             id
@@ -104,6 +104,7 @@ export async function getShopifyProducts(first: number = 50) {
             vendor
             tags
             availableForSale
+            publishedOnPublication(publicationId: "gid://shopify/Publication/1")
             variants(first: 100) {
               edges {
                 node {
@@ -124,6 +125,10 @@ export async function getShopifyProducts(first: number = 50) {
                     name
                     value
                   }
+                  image {
+                    url
+                    altText
+                  }
                 }
               }
             }
@@ -132,8 +137,14 @@ export async function getShopifyProducts(first: number = 50) {
                 node {
                   url
                   altText
+                  width
+                  height
                 }
               }
+            }
+            featuredImage {
+              url
+              altText
             }
           }
         }
