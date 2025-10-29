@@ -72,6 +72,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Product routes
   app.get("/api/products", async (req, res) => {
     try {
+      // Cache for 2 minutes (products change infrequently)
+      res.setHeader('Cache-Control', 'public, max-age=120');
+      
       const products = await storage.getAllProducts();
       res.json(products);
     } catch (error: any) {
@@ -956,6 +959,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Homepage content routes
   app.get("/api/homepage", async (req, res) => {
     try {
+      // Cache for 5 minutes (homepage content changes rarely)
+      res.setHeader('Cache-Control', 'public, max-age=300');
+      
       const content = await storage.getHomepageContent();
       res.json(content || {
         heroTitle: null,
